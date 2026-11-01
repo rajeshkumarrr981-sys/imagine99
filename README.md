@@ -1,6 +1,10 @@
 # Imagine99
 
 Imagine99 is a small full-stack e-commerce store built with **Next.js 16 (App Router)**, **MongoDB + Mongoose** and **Auth.js (NextAuth v4)**.
+Live site: https://imagine99.vercel.app
+
+Prices are in Indian Rupees (₹). Shipping is ₹99, free on orders over ₹4,999, and orders are paid on delivery.
+
 The UI is based on the free [NextMerce](https://github.com/NextMerce/nextjs-ecommerce-template) template; this version replaces its static demo data with a real backend.
 
 ## Features
