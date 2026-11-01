@@ -1,20 +1,21 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-type InitialState = {
-  items: WishListItem[];
-};
-
-type WishListItem = {
-  id: number;
+export type WishListItem = {
+  id: string;
   title: string;
   price: number;
   discountedPrice: number;
   quantity: number;
   status?: string;
+  stock?: number;
   imgs?: {
     thumbnails: string[];
     previews: string[];
   };
+};
+
+type InitialState = {
+  items: WishListItem[];
 };
 
 const initialState: InitialState = {
@@ -26,38 +27,21 @@ export const wishlist = createSlice({
   initialState,
   reducers: {
     addItemToWishlist: (state, action: PayloadAction<WishListItem>) => {
-      const { id, title, price, quantity, imgs, discountedPrice, status } =
-        action.payload;
-      const existingItem = state.items.find((item) => item.id === id);
-
-      if (existingItem) {
-        existingItem.quantity += quantity;
-      } else {
-        state.items.push({
-          id,
-          title,
-          price,
-          quantity,
-          imgs,
-          discountedPrice,
-          status,
-        });
-      }
+      if (state.items.some((item) => item.id === action.payload.id)) return;
+      state.items.push({ ...action.payload, quantity: 1 });
     },
-    removeItemFromWishlist: (state, action: PayloadAction<number>) => {
-      const itemId = action.payload;
-      state.items = state.items.filter((item) => item.id !== itemId);
+    removeItemFromWishlist: (state, action: PayloadAction<string>) => {
+      state.items = state.items.filter((item) => item.id !== action.payload);
     },
-
     removeAllItemsFromWishlist: (state) => {
       state.items = [];
+    },
+    replaceWishlist: (state, action: PayloadAction<WishListItem[]>) => {
+      state.items = action.payload;
     },
   },
 });
 
-export const {
-  addItemToWishlist,
-  removeItemFromWishlist,
-  removeAllItemsFromWishlist,
-} = wishlist.actions;
+export const { addItemToWishlist, removeItemFromWishlist, removeAllItemsFromWishlist, replaceWishlist } =
+  wishlist.actions;
 export default wishlist.reducer;

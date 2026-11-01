@@ -2,14 +2,16 @@
 
 import { useState } from "react";
 
-const CategoryItem = ({ category }) => {
-  const [selected, setSelected] = useState(false);
+type Category = { name: string; count: number };
+
+const CategoryItem = ({ category, selected, onClick }: { category: Category; selected: boolean; onClick: () => void }) => {
   return (
     <button
       className={`${
         selected && "text-blue"
       } group flex items-center justify-between ease-out duration-200 hover:text-blue `}
-      onClick={() => setSelected(!selected)}
+      type="button"
+      onClick={onClick}
     >
       <div className="flex items-center gap-2">
         <div
@@ -43,13 +45,21 @@ const CategoryItem = ({ category }) => {
           selected ? "text-white bg-blue" : "bg-gray-2"
         } inline-flex rounded-[30px] text-custom-xs px-2 ease-out duration-200 group-hover:text-white group-hover:bg-blue`}
       >
-        {category.products}
+        {category.count}
       </span>
     </button>
   );
 };
 
-const CategoryDropdown = ({ categories }) => {
+const CategoryDropdown = ({
+  categories,
+  active,
+  onSelect,
+}: {
+  categories: Category[];
+  active?: string;
+  onSelect: (name: string | undefined) => void;
+}) => {
   const [toggleDropdown, setToggleDropdown] = useState(true);
 
   return (
@@ -96,7 +106,12 @@ const CategoryDropdown = ({ categories }) => {
         }`}
       >
         {categories.map((category, key) => (
-          <CategoryItem key={key} category={category} />
+          <CategoryItem
+            key={key}
+            category={category}
+            selected={active === category.name}
+            onClick={() => onSelect(active === category.name ? undefined : category.name)}
+          />
         ))}
       </div>
     </div>

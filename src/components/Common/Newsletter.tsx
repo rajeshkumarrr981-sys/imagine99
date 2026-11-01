@@ -1,51 +1,77 @@
-import React from "react";
-import Image from "next/image";
+"use client";
+import React, { useState } from "react";
+import Diya from "@/components/Diwali/Diya";
 
+/** Newsletter sign-up. Saves the email to the database. */
 const Newsletter = () => {
-  return (
-    <section className="overflow-hidden">
-      <div className="max-w-[1170px] mx-auto px-4 sm:px-8 xl:px-0">
-        <div className="relative z-1 overflow-hidden rounded-xl">
-          {/* <!-- bg shapes --> */}
-          <Image
-            src="/images/shapes/newsletter-bg.jpg"
-            alt="background illustration"
-            className="absolute -z-1 w-full h-full left-0 top-0 rounded-xl"
-            width={1170}
-            height={200}
-          />
-          <div className="absolute -z-1 max-w-[523px] max-h-[243px] w-full h-full right-0 top-0 bg-gradient-1"></div>
+  const [status, setStatus] = useState<"idle" | "saving" | "done" | "error">("idle");
+  const [message, setMessage] = useState("");
 
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 px-4 sm:px-7.5 xl:pl-12.5 xl:pr-14 py-11">
-            <div className="max-w-[491px] w-full">
-              <h2 className="max-w-[399px] text-white font-bold text-lg sm:text-xl xl:text-heading-4 mb-3">
-                Don&apos;t Miss Out Latest Trends & Offers
-              </h2>
-              <p className="text-white">
-                Register to receive news about the latest offers & discount
-                codes
-              </p>
+  async function submit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const email = String(new FormData(e.currentTarget).get("email") ?? "");
+    setStatus("saving");
+    const res = await fetch("/api/newsletter", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    if (res.ok) {
+      setStatus("done");
+      setMessage("Thank you. We'll write when something worth sharing arrives.");
+    } else {
+      const data = await res.json().catch(() => ({}));
+      setStatus("error");
+      setMessage(data.error ?? "Something went wrong. Please try again.");
+    }
+  }
+
+  return (
+    <section className="pt-24 pb-24">
+      <div className="max-w-[1170px] w-full mx-auto px-4 sm:px-8 xl:px-0">
+        <div className="relative overflow-hidden rounded-2xl border border-gray-3 bg-marigold-wash bg-kolam px-6 py-12 sm:px-12 sm:py-14">
+          <div className="grid lg:grid-cols-2 gap-8 items-center">
+            <div className="flex items-start gap-5">
+              <Diya size={52} className="shrink-0 hidden sm:block" />
+              <div>
+                <h2 className="text-[28px] sm:text-[34px] leading-[1.15] text-dark">Letters from Imagine99</h2>
+                <p className="mt-2 text-dark-4 max-w-[440px]">New arrivals and festive offers, a few times a season. No noise.</p>
+              </div>
             </div>
 
-            <div className="max-w-[477px] w-full">
-              <form>
-                <div className="flex flex-col sm:flex-row gap-4">
+            {status === "done" ? (
+              <p className="text-dark font-medium" role="status">
+                {message}
+              </p>
+            ) : (
+              <form onSubmit={submit} className="w-full">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <label htmlFor="newsletter-email" className="sr-only">
+                    Email address
+                  </label>
                   <input
+                    id="newsletter-email"
                     type="email"
                     name="email"
-                    id="email"
-                    placeholder="Enter your email"
-                    className="w-full bg-gray-1 border border-gray-3 outline-none rounded-md placeholder:text-dark-4 py-3 px-5"
+                    required
+                    placeholder="Your email address"
+                    className="flex-1 rounded-full border border-gray-4 bg-white py-3.5 px-6 text-dark placeholder:text-dark-4 outline-none focus:border-brass"
                   />
                   <button
                     type="submit"
-                    className="inline-flex justify-center py-3 px-7 text-white bg-blue font-medium rounded-md ease-out duration-200 hover:bg-blue-dark"
+                    disabled={status === "saving"}
+                    className="rounded-full bg-blue px-7 py-3.5 font-medium text-white ease-out duration-200 hover:bg-blue-dark disabled:opacity-60"
                   >
-                    Subscribe
+                    {status === "saving" ? "Subscribing…" : "Subscribe"}
                   </button>
                 </div>
+                {status === "error" && (
+                  <p className="mt-3 text-custom-sm text-red" role="alert">
+                    {message}
+                  </p>
+                )}
               </form>
-            </div>
+            )}
           </div>
         </div>
       </div>

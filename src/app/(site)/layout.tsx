@@ -2,12 +2,17 @@
 import { useState, useEffect } from "react";
 import "../css/euclid-circular-a-font.css";
 import "../css/style.css";
+import { display } from "../fonts";
+import DiwaliDefs from "@/components/Diwali/Defs";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 
 import { ModalProvider } from "../context/QuickViewModalContext";
 import { CartModalProvider } from "../context/CartSidebarModalContext";
 import { ReduxProvider } from "@/redux/provider";
+import { SessionProvider } from "next-auth/react";
+import StoreSync from "@/components/Common/StoreSync";
+import { Toaster } from "react-hot-toast";
 import QuickViewModal from "@/components/Common/QuickViewModal";
 import CartSidebarModal from "@/components/Common/CartSidebarModal";
 import { PreviewSliderProvider } from "../context/PreviewSliderContext";
@@ -28,13 +33,17 @@ export default function RootLayout({
   }, []);
 
   return (
-    <html lang="en" suppressHydrationWarning={true}>
+    <html lang="en" className={display.variable} suppressHydrationWarning={true}>
       <body>
+        <DiwaliDefs />
         {loading ? (
           <PreLoader />
         ) : (
           <>
+            <SessionProvider>
             <ReduxProvider>
+              <StoreSync />
+              <Toaster position="top-center" containerStyle={{ zIndex: 999999 }} />
               <CartModalProvider>
                 <ModalProvider>
                   <PreviewSliderProvider>
@@ -50,6 +59,7 @@ export default function RootLayout({
             </ReduxProvider>
             <ScrollToTop />
             <Footer />
+            </SessionProvider>
           </>
         )}
       </body>

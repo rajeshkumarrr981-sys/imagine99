@@ -1,8 +1,10 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { Product } from "@/types/product";
+import { money } from "@/lib/pricing";
 
-const LatestProducts = ({ products }) => {
+const LatestProducts = ({ products }: { products: Product[] }) => {
   return (
     <div className="shadow-1 bg-white rounded-xl mt-7.5">
       <div className="px-4 sm:px-6 py-4.5 border-b border-gray-3">
@@ -20,9 +22,9 @@ const LatestProducts = ({ products }) => {
 
               <div>
                 <h3 className="font-medium text-dark mb-1 ease-out duration-200 hover:text-blue">
-                  <Link href="/shop-details"> {product.title} </Link>
+                  <Link href={`/shop-details/${product.id}`}> {product.title} </Link>
                 </h3>
-                <p className="text-custom-sm">Price: ${product.price}</p>
+                <p className="text-custom-sm">Price: {money(product.price)}</p>
               </div>
             </div>
           ))}

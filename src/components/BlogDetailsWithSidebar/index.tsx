@@ -5,9 +5,9 @@ import LatestPosts from "../Blog/LatestPosts";
 import LatestProducts from "../Blog/LatestProducts";
 import blogData from "../BlogGrid/blogData";
 import Image from "next/image";
-import shopData from "../Shop/shopData"; 
+import { Product } from "@/types/product";
 
-const BlogDetailsWithSidebar = () => {
+const BlogDetailsWithSidebar = ({ products }: { products: Product[] }) => {
   return (
     <>
       <Breadcrumb
@@ -272,7 +272,7 @@ const BlogDetailsWithSidebar = () => {
               <LatestPosts blogs={blogData} />
 
               {/* <!-- Latest Products box --> */}
-              <LatestProducts products={shopData} />
+              <LatestProducts products={products} />
 
               {/* <!-- Popular Category box --> */}
               <div className="shadow-1 bg-white rounded-xl mt-7.5">

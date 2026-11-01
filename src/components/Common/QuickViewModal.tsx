@@ -9,6 +9,8 @@ import Image from "next/image";
 import { usePreviewSlider } from "@/app/context/PreviewSliderContext";
 import { resetQuickView } from "@/redux/features/quickView-slice";
 import { updateproductDetails } from "@/redux/features/product-details";
+import { addItemToWishlist } from "@/redux/features/wishlist-slice";
+import { money } from "@/lib/pricing";
 
 const QuickViewModal = () => {
   const { isModalOpen, closeModal } = useModalContext();
@@ -268,8 +270,8 @@ const QuickViewModal = () => {
                   </div>
 
                   <span>
-                    <span className="font-medium text-dark"> 4.7 Rating </span>
-                    <span className="text-dark-2"> (5 reviews) </span>
+                    <span className="font-medium text-dark"> {product.rating.toFixed(1)} Rating </span>
+                    <span className="text-dark-2"> ({product.reviews} reviews) </span>
                   </span>
                 </div>
 
@@ -298,14 +300,11 @@ const QuickViewModal = () => {
                     </defs>
                   </svg>
 
-                  <span className="font-medium text-dark"> In Stock </span>
+                  <span className="font-medium text-dark"> {product.stock > 0 ? `In Stock (${product.stock})` : "Out of Stock"} </span>
                 </div>
               </div>
 
-              <p>
-                Lorem Ipsum is simply dummy text of the printing and typesetting
-                industry. Lorem Ipsum has.
-              </p>
+              <p>{product.description}</p>
 
               <div className="flex flex-wrap justify-between gap-5 mt-6 mb-7.5">
                 <div>
@@ -315,10 +314,10 @@ const QuickViewModal = () => {
 
                   <span className="flex items-center gap-2">
                     <span className="font-semibold text-dark text-xl xl:text-heading-4">
-                      ${product.discountedPrice}
+                      {money(product.discountedPrice)}
                     </span>
                     <span className="font-medium text-dark-4 text-lg xl:text-2xl line-through">
-                      ${product.price}
+                      {money(product.price)}
                     </span>
                   </span>
                 </div>
@@ -360,7 +359,7 @@ const QuickViewModal = () => {
                     </span>
 
                     <button
-                      onClick={() => setQuantity(quantity + 1)}
+                      onClick={() => setQuantity(Math.min(quantity + 1, Math.max(product.stock, 1)))}
                       aria-label="button for add product"
                       className="flex items-center justify-center w-10 h-10 rounded-[5px] bg-gray-2 text-dark ease-out duration-200 hover:text-blue"
                     >
@@ -392,7 +391,7 @@ const QuickViewModal = () => {
 
               <div className="flex flex-wrap items-center gap-4">
                 <button
-                  disabled={quantity === 0 && true}
+                  disabled={product.stock < 1}
                   onClick={() => handleAddToCart()}
                   className={`inline-flex font-medium text-white bg-blue py-3 px-7 rounded-md ease-out duration-200 hover:bg-blue-dark
                   `}
@@ -401,6 +400,10 @@ const QuickViewModal = () => {
                 </button>
 
                 <button
+                  onClick={() => {
+                    dispatch(addItemToWishlist({ ...product, quantity: 1, status: "available" }));
+                    closeModal();
+                  }}
                   className={`inline-flex items-center gap-2 font-medium text-white bg-dark py-3 px-6 rounded-md ease-out duration-200 hover:bg-opacity-95 `}
                 >
                   <svg

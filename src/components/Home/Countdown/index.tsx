@@ -1,135 +1,109 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import Image from "next/image";
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import Diya from "@/components/Diwali/Diya";
+import Lantern from "@/components/Diwali/Lantern";
+import { DIWALI_AT, DIWALI_YEAR } from "@/lib/festival";
 
-const CounDown = () => {
-  const [days, setDays] = useState(0);
-  const [hours, setHours] = useState(0);
-  const [minutes, setMinutes] = useState(0);
-  const [seconds, setSeconds] = useState(0);
+type Left = { days: number; hours: number; minutes: number; seconds: number };
 
-  const deadline = "December, 31, 2024";
-
-  const getTime = () => {
-    const time = Date.parse(deadline) - Date.now();
-
-    setDays(Math.floor(time / (1000 * 60 * 60 * 24)));
-    setHours(Math.floor((time / (1000 * 60 * 60)) % 24));
-    setMinutes(Math.floor((time / 1000 / 60) % 60));
-    setSeconds(Math.floor((time / 1000) % 60));
+function timeLeft(): Left | null {
+  const ms = Date.parse(DIWALI_AT) - Date.now();
+  if (ms <= 0) return null;
+  return {
+    days: Math.floor(ms / 86_400_000),
+    hours: Math.floor((ms / 3_600_000) % 24),
+    minutes: Math.floor((ms / 60_000) % 60),
+    seconds: Math.floor((ms / 1000) % 60),
   };
+}
+
+const pad = (n: number) => String(n).padStart(2, "0");
+
+/** Festive banner counting down to Lakshmi Puja; turns into a greeting on the day. */
+const Countdown = () => {
+  // Start empty so server and browser render the same thing, then tick.
+  const [left, setLeft] = useState<Left | null | undefined>(undefined);
 
   useEffect(() => {
-    // @ts-ignore
-    const interval = setInterval(() => getTime(deadline), 1000);
-
-    return () => clearInterval(interval);
+    setLeft(timeLeft());
+    const t = setInterval(() => setLeft(timeLeft()), 1000);
+    return () => clearInterval(t);
   }, []);
 
+  const units: [string, number | undefined][] = [
+    ["Days", left?.days],
+    ["Hours", left?.hours],
+    ["Minutes", left?.minutes],
+    ["Seconds", left?.seconds],
+  ];
+
   return (
-    <section className="overflow-hidden py-20">
+    <section className="pt-24">
       <div className="max-w-[1170px] w-full mx-auto px-4 sm:px-8 xl:px-0">
-        <div className="relative overflow-hidden z-1 rounded-lg bg-[#D0E9F3] p-4 sm:p-7.5 lg:p-10 xl:p-15">
-          <div className="max-w-[422px] w-full">
-            <span className="block font-medium text-custom-1 text-blue mb-2.5">
-              Don’t Miss!!
-            </span>
-
-            <h2 className="font-bold text-dark text-xl lg:text-heading-4 xl:text-heading-3 mb-3">
-              Enhance Your Music Experience
-            </h2>
-
-            <p>The Havit H206d is a wired PC headphone.</p>
-
-            {/* <!-- Countdown timer --> */}
-            <div
-              className="flex flex-wrap gap-6 mt-6"
-              x-data="timer()"
-              x-init="countdown()"
-            >
-              {/* <!-- timer day --> */}
-              <div>
-                <span
-                  className="min-w-[64px] h-14.5 font-semibold text-xl lg:text-3xl text-dark rounded-lg flex items-center justify-center bg-white shadow-2 px-4 mb-2"
-                  x-text="days"
-                >
-                  {" "}
-                  {days < 10 ? "0" + days : days}{" "}
-                </span>
-                <span className="block text-custom-sm text-dark text-center">
-                  Days
-                </span>
-              </div>
-
-              {/* <!-- timer hours --> */}
-              <div>
-                <span
-                  className="min-w-[64px] h-14.5 font-semibold text-xl lg:text-3xl text-dark rounded-lg flex items-center justify-center bg-white shadow-2 px-4 mb-2"
-                  x-text="hours"
-                >
-                  {" "}
-                  {hours < 10 ? "0" + hours : hours}{" "}
-                </span>
-                <span className="block text-custom-sm text-dark text-center">
-                  Hours
-                </span>
-              </div>
-
-              {/* <!-- timer minutes --> */}
-              <div>
-                <span
-                  className="min-w-[64px] h-14.5 font-semibold text-xl lg:text-3xl text-dark rounded-lg flex items-center justify-center bg-white shadow-2 px-4 mb-2"
-                  x-text="minutes"
-                >
-                  {minutes < 10 ? "0" + minutes : minutes}{" "}
-                </span>
-                <span className="block text-custom-sm text-dark text-center">
-                  Minutes
-                </span>
-              </div>
-
-              {/* <!-- timer seconds --> */}
-              <div>
-                <span
-                  className="min-w-[64px] h-14.5 font-semibold text-xl lg:text-3xl text-dark rounded-lg flex items-center justify-center bg-white shadow-2 px-4 mb-2"
-                  x-text="seconds"
-                >
-                  {seconds < 10 ? "0" + seconds : seconds}{" "}
-                </span>
-                <span className="block text-custom-sm text-dark text-center">
-                  Seconds
-                </span>
-              </div>
-            </div>
-            {/* <!-- Countdown timer ends --> */}
-
-            <a
-              href="#"
-              className="inline-flex font-medium text-custom-sm text-white bg-blue py-3 px-9.5 rounded-md ease-out duration-200 hover:bg-blue-dark mt-7.5"
-            >
-              Check it Out!
-            </a>
+        <div className="relative overflow-hidden rounded-2xl bg-night text-ivory">
+          <div className="absolute inset-0 bg-kolam-night opacity-70" aria-hidden="true" />
+          <div className="absolute top-0 right-[8%] hidden md:block">
+            <Lantern drop={30} size={52} variant="round" delay={0.6} />
+          </div>
+          <div className="absolute top-0 right-[22%] hidden lg:block">
+            <Lantern drop={84} size={34} variant="kandil" delay={1.7} />
           </div>
 
-          {/* <!-- bg shapes --> */}
-          <Image
-            src="/images/countdown/countdown-bg.png"
-            alt="bg shapes"
-            className="hidden sm:block absolute right-0 bottom-0 -z-1"
-            width={737}
-            height={482}
-          />
-          <Image
-            src="/images/countdown/countdown-01.png"
-            alt="product"
-            className="hidden lg:block absolute right-4 xl:right-33 bottom-4 xl:bottom-10 -z-1"
-            width={411}
-            height={376}
-          />
+          <div className="relative grid lg:grid-cols-2 gap-10 px-6 py-12 sm:px-12 sm:py-16">
+            <div>
+              <p className="eyebrow text-marigold-light">Deepavali {DIWALI_YEAR}</p>
+              {left === null ? (
+                <>
+                  <h2 className="mt-3 text-[34px] sm:text-[44px] leading-[1.1] text-ivory">
+                    Shubh Deepavali <span className="italic text-marigold">to you and yours</span>
+                  </h2>
+                  <p className="mt-4 max-w-[420px] text-ivory/70">
+                    May the lights bring warmth to your home. Our festive picks are still available while stock lasts.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h2 className="mt-3 text-[34px] sm:text-[44px] leading-[1.1] text-ivory">
+                    Counting down to <span className="italic text-marigold">Lakshmi Puja</span>
+                  </h2>
+                  <p className="mt-4 max-w-[420px] text-ivory/70">
+                    Order early so your gifts arrive before the lamps are lit. Every order ships with cash on delivery.
+                  </p>
+                </>
+              )}
+              <Link
+                href="/shop-with-sidebar"
+                className="mt-8 inline-flex rounded-full border border-marigold/60 px-6 py-3 text-custom-sm font-medium text-marigold-light ease-out duration-200 hover:bg-marigold hover:text-night hover:border-marigold"
+              >
+                Find a gift
+              </Link>
+            </div>
+
+            <div className="flex flex-col justify-end gap-8">
+              {left !== null && (
+                <dl className="grid grid-cols-4 gap-3 sm:gap-4 max-w-[440px]" aria-live="off">
+                  {units.map(([label, value]) => (
+                    <div key={label} className="rounded-xl border border-brass/30 bg-night-2/60 px-2 py-4 text-center">
+                      <dd className="font-display text-[34px] sm:text-[42px] leading-none text-ivory tabular-nums">
+                        {value === undefined ? "--" : pad(value)}
+                      </dd>
+                      <dt className="mt-2 text-[10px] uppercase tracking-[0.2em] text-ivory/50">{label}</dt>
+                    </div>
+                  ))}
+                </dl>
+              )}
+              <div className="flex items-end gap-6" aria-hidden="true">
+                {[0, 0.5, 1.1, 0.3, 0.8].map((d, i) => (
+                  <Diya key={i} size={i === 2 ? 46 : 36} delay={d} />
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
   );
 };
 
-export default CounDown;
+export default Countdown;

@@ -5,10 +5,31 @@
 @layer base {
   html {
     @apply scroll-smooth;
+    /* The design is light-only; keep browser dark mode from showing through. */
+    color-scheme: light;
   }
 
   body {
-    @apply font-euclid-circular-a font-normal text-base text-dark-3 relative z-1;
+    @apply font-euclid-circular-a font-normal text-base text-dark-3 relative z-1 bg-ivory;
+  }
+
+  h1,
+  h2 {
+    @apply font-display tracking-[-0.01em];
+    font-variation-settings: "SOFT" 50;
+  }
+
+  ::selection {
+    @apply bg-marigold-soft text-dark;
+  }
+
+  /* Lanterns and flames hold still for people who prefer less motion. */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-sway,
+    .animate-flicker,
+    .animate-glow {
+      animation: none !important;
+    }
   }
 }
 
@@ -21,6 +42,22 @@
 }
 
 @layer utilities {
+  /* Small caps label used above section titles. */
+  .eyebrow {
+    @apply font-medium uppercase text-custom-xs tracking-[0.22em] text-brass-dark;
+  }
+
+  /* Faint kolam dot grid, used as a paper texture. */
+  .bg-kolam {
+    background-image: radial-gradient(rgba(140, 107, 60, 0.16) 1px, transparent 1.2px);
+    background-size: 22px 22px;
+  }
+
+  .bg-kolam-night {
+    background-image: radial-gradient(rgba(225, 162, 58, 0.12) 1px, transparent 1.2px);
+    background-size: 26px 26px;
+  }
+
   /* Chrome, Safari and Opera */
   .no-scrollbar::-webkit-scrollbar {
     display: none;

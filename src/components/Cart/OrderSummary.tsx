@@ -1,7 +1,9 @@
+import Link from "next/link";
 import { selectTotalPrice } from "@/redux/features/cart-slice";
 import { useAppSelector } from "@/redux/store";
 import React from "react";
 import { useSelector } from "react-redux";
+import { money } from "@/lib/pricing";
 
 const OrderSummary = () => {
   const cartItems = useAppSelector((state) => state.cartReducer.items);
@@ -34,7 +36,7 @@ const OrderSummary = () => {
               </div>
               <div>
                 <p className="text-dark text-right">
-                  ${item.discountedPrice * item.quantity}
+                  {money(item.discountedPrice * item.quantity)}
                 </p>
               </div>
             </div>
@@ -47,18 +49,18 @@ const OrderSummary = () => {
             </div>
             <div>
               <p className="font-medium text-lg text-dark text-right">
-                ${totalPrice}
+                {money(totalPrice)}
               </p>
             </div>
           </div>
 
           {/* <!-- checkout button --> */}
-          <button
-            type="submit"
+          <Link
+            href="/checkout"
             className="w-full flex justify-center font-medium text-white bg-blue py-3 px-6 rounded-md ease-out duration-200 hover:bg-blue-dark mt-7.5"
           >
-            Process to Checkout
-          </button>
+            Proceed to Checkout
+          </Link>
         </div>
       </div>
     </div>

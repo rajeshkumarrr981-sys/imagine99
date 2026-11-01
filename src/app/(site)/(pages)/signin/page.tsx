@@ -1,18 +1,29 @@
 import Signin from "@/components/Auth/Signin";
-import React from "react";
+import { currentUser, isGoogleEnabled } from "@/lib/auth";
 import { Metadata } from "next";
+import { redirect } from "next/navigation";
+
 export const metadata: Metadata = {
-  title: "Signin Page | NextCommerce Nextjs E-commerce template",
-  description: "This is Signin Page for NextCommerce Template",
-  // other metadata
+  title: "Sign in | Imagine99",
 };
 
-const SigninPage = () => {
+// Only allow redirects back into this site.
+function safeCallback(url?: string) {
+  return url && url.startsWith("/") && !url.startsWith("//") ? url : "/my-account";
+}
+
+export default async function SigninPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ callbackUrl?: string; error?: string }>;
+}) {
+  const { callbackUrl, error } = await searchParams;
+  const target = safeCallback(callbackUrl);
+  if (await currentUser()) redirect(target);
+
   return (
     <main>
-      <Signin />
+      <Signin googleEnabled={isGoogleEnabled} callbackUrl={target} error={error} />
     </main>
   );
-};
-
-export default SigninPage;
+}

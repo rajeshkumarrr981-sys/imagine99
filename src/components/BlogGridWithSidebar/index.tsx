@@ -6,9 +6,9 @@ import SearchForm from "../Blog/SearchForm";
 import LatestPosts from "../Blog/LatestPosts";
 import LatestProducts from "../Blog/LatestProducts";
 import Categories from "../Blog/Categories";
-import shopData from "../Shop/shopData"; 
+import { Product } from "@/types/product";
  
-const BlogGridWithSidebar = () => {
+const BlogGridWithSidebar = ({ products }: { products: Product[] }) => {
   const categories = [
     {
       name: "Desktop",
@@ -179,7 +179,7 @@ const BlogGridWithSidebar = () => {
               <LatestPosts blogs={blogData} />
 
               {/* <!-- Latest Products box --> */}
-              <LatestProducts products={shopData} />
+              <LatestProducts products={products} />
 
               {/* <!-- Popular Category box --> */}
               <Categories categories={categories} />

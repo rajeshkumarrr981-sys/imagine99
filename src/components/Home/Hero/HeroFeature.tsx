@@ -1,44 +1,67 @@
 import React from "react";
-import Image from "next/image";
+import { FREE_SHIPPING_OVER, money } from "@/lib/pricing";
 
-const featureData = [
+const stroke = {
+  width: 26,
+  height: 26,
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 1.3,
+  strokeLinecap: "round" as const,
+  strokeLinejoin: "round" as const,
+  "aria-hidden": true,
+};
+
+const features = [
   {
-    img: "/images/icons/icon-01.svg",
-    title: "Free Shipping",
-    description: "For all orders $200",
+    title: "Free shipping",
+    text: `On every order over ${money(FREE_SHIPPING_OVER)}`,
+    icon: (
+      <svg {...stroke}>
+        <path d="M3 7h11v9H3zM14 10h4l3 3v3h-7" />
+        <circle cx="7" cy="17.5" r="1.6" />
+        <circle cx="17" cy="17.5" r="1.6" />
+      </svg>
+    ),
   },
   {
-    img: "/images/icons/icon-02.svg",
-    title: "1 & 1 Returns",
-    description: "Cancellation after 1 day",
+    title: "Cash on delivery",
+    text: "Pay when your order arrives",
+    icon: (
+      <svg {...stroke}>
+        <rect x="3" y="6.5" width="18" height="11" rx="1.5" />
+        <circle cx="12" cy="12" r="2.4" />
+        <path d="M6.5 9.5v5M17.5 9.5v5" />
+      </svg>
+    ),
   },
   {
-    img: "/images/icons/icon-03.svg",
-    title: "100% Secure Payments",
-    description: "Gurantee secure payments",
-  },
-  {
-    img: "/images/icons/icon-04.svg",
-    title: "24/7 Dedicated Support",
-    description: "Anywhere & anytime",
+    title: "Track every order",
+    text: "Status updates in your account",
+    icon: (
+      <svg {...stroke}>
+        <path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Z" />
+        <circle cx="12" cy="10" r="2.3" />
+      </svg>
+    ),
   },
 ];
 
 const HeroFeature = () => {
   return (
-    <div className="max-w-[1060px] w-full mx-auto px-4 sm:px-8 xl:px-0">
-      <div className="flex flex-wrap items-center gap-7.5 xl:gap-12.5 mt-10">
-        {featureData.map((item, key) => (
-          <div className="flex items-center gap-4" key={key}>
-            <Image src={item.img} alt="icons" width={40} height={41} />
-
-            <div>
-              <h3 className="font-medium text-lg text-dark">{item.title}</h3>
-              <p className="text-sm">{item.description}</p>
-            </div>
-          </div>
+    <div className="border-b border-gray-3 bg-ivory">
+      <ul className="max-w-[1170px] mx-auto px-4 sm:px-8 xl:px-0 grid sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-gray-3">
+        {features.map((f) => (
+          <li key={f.title} className="flex items-center gap-4 py-6 sm:px-8 first:sm:pl-0">
+            <span className="text-brass-dark">{f.icon}</span>
+            <span>
+              <span className="block font-medium text-dark">{f.title}</span>
+              <span className="block text-custom-sm text-dark-4">{f.text}</span>
+            </span>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 };

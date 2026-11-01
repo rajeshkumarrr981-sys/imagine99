@@ -2,22 +2,30 @@ import React from "react";
 import Hero from "./Hero";
 import Categories from "./Categories";
 import NewArrival from "./NewArrivals";
-import PromoBanner from "./PromoBanner";
+import Countdown from "./Countdown";
+import GiftsByBudget from "./GiftsByBudget";
 import BestSeller from "./BestSeller";
-import CounDown from "./Countdown";
-import Testimonials from "./Testimonials";
+import Testimonials, { type HomeReview } from "./Testimonials";
 import Newsletter from "../Common/Newsletter";
+import { Product } from "@/types/product";
 
-const Home = () => {
+type Props = {
+  newArrivals: Product[];
+  bestSellers: Product[];
+  categories: { name: string; count: number }[];
+  reviews: HomeReview[];
+};
+
+const Home = ({ newArrivals, bestSellers, categories, reviews }: Props) => {
   return (
     <main>
-      <Hero />
-      <Categories />
-      <NewArrival />
-      <PromoBanner />
-      <BestSeller />
-      <CounDown />
-      <Testimonials />
+      <Hero featured={bestSellers[0] ?? newArrivals[0]} />
+      <Categories categories={categories} />
+      <NewArrival products={newArrivals} />
+      <Countdown />
+      <BestSeller products={bestSellers} />
+      <GiftsByBudget />
+      <Testimonials reviews={reviews} />
       <Newsletter />
     </main>
   );

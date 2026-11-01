@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import EmptyState from "../Diwali/EmptyState";
 import Breadcrumb from "../Common/Breadcrumb";
 import { useAppSelector } from "@/redux/store";
 import SingleItem from "./SingleItem";
@@ -7,10 +8,23 @@ import SingleItem from "./SingleItem";
 export const Wishlist = () => {
   const wishlistItems = useAppSelector((state) => state.wishlistReducer.items);
 
+  if (wishlistItems.length === 0) {
+    return (
+      <>
+        <Breadcrumb title={"Your wishlist"} pages={["Wishlist"]} />
+        <EmptyState
+          title="No saved gifts yet"
+          text="Tap the heart on any product to keep it here for later."
+          action={{ label: "Browse the shop", href: "/shop-with-sidebar" }}
+        />
+      </>
+    );
+  }
+
   return (
     <>
-      <Breadcrumb title={"Wishlist"} pages={["Wishlist"]} />
-      <section className="overflow-hidden py-20 bg-gray-2">
+      <Breadcrumb title={"Your wishlist"} pages={["Wishlist"]} />
+      <section className="overflow-hidden py-20 bg-ivory">
         <div className="max-w-[1170px] w-full mx-auto px-4 sm:px-8 xl:px-0">
           <div className="flex flex-wrap items-center justify-between gap-5 mb-7.5">
             <h2 className="font-medium text-dark text-2xl">Your Wishlist</h2>
