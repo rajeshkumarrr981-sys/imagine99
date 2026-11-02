@@ -9,7 +9,7 @@ import { selectTotalPrice } from "@/redux/features/cart-slice";
 import { useCartModalContext } from "@/app/context/CartSidebarModalContext";
 import Logo from "@/components/Diwali/Logo";
 import Toran from "@/components/Diwali/Toran";
-import { FREE_SHIPPING_OVER, money } from "@/lib/pricing";
+import { money } from "@/lib/pricing";
 
 const nav = [
   { label: "Home", href: "/" },
@@ -78,7 +78,7 @@ const Header = () => {
             from all of us at Imagine99
           </p>
           <p>
-            Free shipping over {money(FREE_SHIPPING_OVER)} <span className="mx-2 text-brass">·</span> Cash on delivery
+            Everything at ₹149 · ₹249 · ₹399 <span className="mx-2 text-brass">·</span> Free shipping
           </p>
         </div>
       </div>

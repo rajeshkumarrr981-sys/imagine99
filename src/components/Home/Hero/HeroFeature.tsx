@@ -1,5 +1,5 @@
 import React from "react";
-import { FREE_SHIPPING_OVER, money } from "@/lib/pricing";
+import { COD_MIN_ORDER, money } from "@/lib/pricing";
 
 const stroke = {
   width: 26,
@@ -16,7 +16,7 @@ const stroke = {
 const features = [
   {
     title: "Free shipping",
-    text: `On every order over ${money(FREE_SHIPPING_OVER)}`,
+    text: "On every order, anywhere we deliver",
     icon: (
       <svg {...stroke}>
         <path d="M3 7h11v9H3zM14 10h4l3 3v3h-7" />
@@ -26,8 +26,8 @@ const features = [
     ),
   },
   {
-    title: "Cash on delivery",
-    text: "Pay when your order arrives",
+    title: "Pay by UPI",
+    text: `Cash on delivery on orders of ${money(COD_MIN_ORDER)}+`,
     icon: (
       <svg {...stroke}>
         <rect x="3" y="6.5" width="18" height="11" rx="1.5" />

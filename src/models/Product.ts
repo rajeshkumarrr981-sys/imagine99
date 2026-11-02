@@ -31,6 +31,8 @@ const ProductSchema = new Schema(
       // the supplier's own product type ("type" needs the object form, or Mongoose
       // reads the whole `source` field as a string)
       type: { type: String },
+      mrp: Number, // supplier's MRP
+      salePrice: Number, // supplier's own selling price (before our tier pricing)
     },
   },
   { timestamps: true }

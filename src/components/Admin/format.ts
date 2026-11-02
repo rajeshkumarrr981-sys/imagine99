@@ -57,6 +57,9 @@ export type SupplierSource = {
   type: string;
   /** Only set when it's a valid http(s) URL, so it's safe to use as a link href. */
   url: string;
+  /** Supplier's MRP and own selling price, when known. */
+  mrp: number | null;
+  salePrice: number | null;
 };
 
 /**
@@ -76,5 +79,6 @@ export function readSupplierSource(value: unknown): SupplierSource | null {
   } catch {
     // missing or invalid URL: no link
   }
-  return { brand, sku: str(v.sku), type: str(v.type), url };
+  const num = (x: unknown) => (typeof x === "number" && Number.isFinite(x) && x >= 0 ? x : null);
+  return { brand, sku: str(v.sku), type: str(v.type), url, mrp: num(v.mrp), salePrice: num(v.salePrice) };
 }

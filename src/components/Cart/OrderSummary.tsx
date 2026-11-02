@@ -1,13 +1,12 @@
 import Link from "next/link";
-import { selectTotalPrice } from "@/redux/features/cart-slice";
 import { useAppSelector } from "@/redux/store";
 import React from "react";
 import { useSelector } from "react-redux";
-import { money } from "@/lib/pricing";
+import { COD_MIN_ORDER, money, orderTotals, TAX_LABEL } from "@/lib/pricing";
 
 const OrderSummary = () => {
   const cartItems = useAppSelector((state) => state.cartReducer.items);
-  const totalPrice = useSelector(selectTotalPrice);
+  const totals = orderTotals(cartItems.map((i) => ({ price: i.discountedPrice, quantity: i.quantity })));
 
   return (
     <div className="lg:max-w-[455px] w-full">
@@ -42,6 +41,17 @@ const OrderSummary = () => {
             </div>
           ))}
 
+          {totals.taxes > 0 && (
+            <div className="flex items-center justify-between py-4 border-b border-gray-3">
+              <p className="text-dark">{TAX_LABEL}</p>
+              <p className="text-dark text-right">{money(totals.taxes)}</p>
+            </div>
+          )}
+          <div className="flex items-center justify-between py-4 border-b border-gray-3">
+            <p className="text-dark">Shipping</p>
+            <p className="text-dark text-right">Free</p>
+          </div>
+
           {/* <!-- total --> */}
           <div className="flex items-center justify-between pt-5">
             <div>
@@ -49,10 +59,13 @@ const OrderSummary = () => {
             </div>
             <div>
               <p className="font-medium text-lg text-dark text-right">
-                {money(totalPrice)}
+                {money(totals.total)}
               </p>
             </div>
           </div>
+          <p className="text-custom-sm mt-3">
+            {totals.codAllowed ? "Pay by UPI or cash on delivery." : `Pay by UPI. Cash on delivery on orders of ${money(COD_MIN_ORDER)}+.`}
+          </p>
 
           {/* <!-- checkout button --> */}
           <Link

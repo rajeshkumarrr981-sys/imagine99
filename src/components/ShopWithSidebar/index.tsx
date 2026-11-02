@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Breadcrumb from "../Common/Breadcrumb";
 import CustomSelect from "./CustomSelect";
 import CategoryDropdown from "./CategoryDropdown";
-import PriceDropdown from "./PriceDropdown";
+import { PRICE_TIERS, money } from "@/lib/pricing";
 import Pagination from "./Pagination";
 import SingleGridItem from "../Shop/SingleGridItem";
 import SingleListItem from "../Shop/SingleListItem";
@@ -20,9 +20,8 @@ type Props = {
   activeCategory?: string;
   search?: string;
   sort: string;
-  priceCeiling: number;
-  minPrice?: number;
-  maxPrice?: number;
+  activeTier?: number;
+  tierCounts: Record<number, number>;
 };
 
 const sortOptions = [
@@ -42,9 +41,8 @@ const ShopWithSidebar = ({
   activeCategory,
   search,
   sort,
-  priceCeiling,
-  minPrice,
-  maxPrice,
+  activeTier,
+  tierCounts,
 }: Props) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -62,22 +60,6 @@ const ShopWithSidebar = ({
     if (!keepPage) params.delete("page");
     const qs = params.toString();
     router.push(qs ? `/shop-with-sidebar?${qs}` : "/shop-with-sidebar", { scroll: keepPage });
-  };
-
-  // The slider moves freely; the URL updates shortly after it stops.
-  const urlRange: [number, number] = [minPrice ?? 0, Math.min(maxPrice ?? priceCeiling, priceCeiling)];
-  const [priceRange, setPriceRange] = useState<[number, number]>(urlRange);
-  useEffect(() => setPriceRange(urlRange), [urlRange[0], urlRange[1]]); // eslint-disable-line react-hooks/exhaustive-deps
-  const priceTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const onPriceChange = (range: [number, number]) => {
-    setPriceRange(range);
-    clearTimeout(priceTimer.current);
-    priceTimer.current = setTimeout(() => {
-      updateQuery({
-        min: range[0] > 0 ? String(range[0]) : undefined,
-        max: range[1] < priceCeiling ? String(range[1]) : undefined,
-      });
-    }, 600);
   };
 
   const clearAll = () => router.push("/shop-with-sidebar");
@@ -109,7 +91,7 @@ const ShopWithSidebar = ({
   return (
     <>
       <Breadcrumb
-        title={activeCategory ?? (search ? `Results for “${search}”` : "The Diwali shop")}
+        title={activeCategory ?? (search ? `Results for “${search}”` : activeTier ? `Everything at ${money(activeTier)}` : "The Diwali shop")}
         pages={activeCategory ? ["Shop", activeCategory] : ["Shop"]}
       />
       <section className="overflow-hidden relative pb-20 pt-10 lg:pt-14 bg-ivory">
@@ -173,7 +155,24 @@ const ShopWithSidebar = ({
                   />
 
                   {/* // <!-- price range box --> */}
-                  <PriceDropdown max={priceCeiling} value={priceRange} onChange={onPriceChange} />
+                  <div className="bg-white shadow-1 rounded-lg">
+                    <p className="text-dark py-3 pl-6 pr-5.5 shadow-filter">Price</p>
+                    <div className="flex flex-col gap-2.5 py-5 px-6">
+                      {PRICE_TIERS.map((tier) => (
+                        <button
+                          key={tier}
+                          type="button"
+                          onClick={() => updateQuery({ tier: activeTier === tier ? undefined : String(tier), min: undefined, max: undefined })}
+                          className={`flex items-center justify-between rounded-full border px-4 py-2 text-custom-sm ease-out duration-200 ${
+                            activeTier === tier ? "border-blue bg-blue text-white" : "border-gray-3 text-dark hover:border-brass"
+                          }`}
+                        >
+                          <span>Everything {money(tier)}</span>
+                          <span className={activeTier === tier ? "text-white/80" : "text-dark-4"}>{tierCounts[tier] ?? 0}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </form>
             </div>

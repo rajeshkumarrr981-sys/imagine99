@@ -3,7 +3,7 @@ import Hero from "./Hero";
 import Categories from "./Categories";
 import NewArrival from "./NewArrivals";
 import Countdown from "./Countdown";
-import GiftsByBudget from "./GiftsByBudget";
+import PriceTiers from "./PriceTiers";
 import BestSeller from "./BestSeller";
 import Testimonials, { type HomeReview } from "./Testimonials";
 import Newsletter from "../Common/Newsletter";
@@ -14,18 +14,19 @@ type Props = {
   newArrivals: Product[];
   bestSellers: Product[];
   categories: { name: string; count: number; image?: string }[];
+  tierCounts: Record<number, number>;
   reviews: HomeReview[];
 };
 
-const Home = ({ featured, newArrivals, bestSellers, categories, reviews }: Props) => {
+const Home = ({ featured, newArrivals, bestSellers, categories, tierCounts, reviews }: Props) => {
   return (
     <main>
       <Hero featured={featured} />
+      <PriceTiers counts={tierCounts} />
       <Categories categories={categories} />
       <NewArrival products={newArrivals} />
       <Countdown />
       <BestSeller products={bestSellers} />
-      <GiftsByBudget />
       <Testimonials reviews={reviews} />
       <Newsletter />
     </main>

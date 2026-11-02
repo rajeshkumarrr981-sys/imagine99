@@ -280,3 +280,58 @@ export async function updateOrderStatus(
   revalidatePath("/my-account");
   return { ok: true };
 }
+
+// ---------------------------------------------------------------------------
+// Payments
+// ---------------------------------------------------------------------------
+
+/** Statuses staff can set by hand. "submitted" is only set by the customer entering a UTR. */
+const ADMIN_PAYMENT_STATUSES = ["paid", "failed", "pending"] as const;
+
+const paymentStatusSchema = z.object({
+  orderId: z.string().refine((id) => isValidObjectId(id), "Invalid order id"),
+  status: z.enum(ADMIN_PAYMENT_STATUSES),
+});
+
+/**
+ * Staff confirm (or reject) a payment after checking the bank app. Marking a
+ * UPI order paid also moves a still-pending order on to "processing".
+ */
+export async function updatePaymentStatus(
+  orderId: string,
+  status: string
+): Promise<{ ok: boolean; error?: string }> {
+  await assertAdmin();
+
+  const parsed = paymentStatusSchema.safeParse({ orderId, status });
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  const { orderId: id, status: next } = parsed.data;
+
+  await connectDB();
+  const existing = await Order.findById(id).select("paymentMethod paymentStatus paidAt status").lean();
+  if (!existing) return { ok: false, error: "Order not found." };
+
+  const update =
+    next === "paid"
+      ? {
+          // Keep the original confirmation time if it was already marked paid.
+          $set: {
+            paymentStatus: next,
+            paidAt: existing.paymentStatus === "paid" && existing.paidAt ? existing.paidAt : new Date(),
+          },
+        }
+      : { $set: { paymentStatus: next }, $unset: { paidAt: 1 } };
+  await Order.updateOne({ _id: id }, update, { runValidators: true });
+
+  if (next === "paid" && existing.paymentMethod === "upi") {
+    // Conditional on the current status, so a concurrent status change isn't overwritten.
+    await Order.updateOne({ _id: id, status: "pending" }, { $set: { status: "processing" } });
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/orders");
+  revalidatePath(`/admin/orders/${id}`);
+  revalidatePath("/my-account");
+  revalidatePath(`/orders/${id}`);
+  return { ok: true };
+}

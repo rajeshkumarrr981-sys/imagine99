@@ -1,5 +1,5 @@
 import Home from "@/components/Home";
-import { getCategories, getProducts } from "@/lib/products";
+import { getCategories, getProducts, getTierCounts } from "@/lib/products";
 import { connectDB } from "@/lib/db";
 import { Review } from "@/models/Review";
 import { ProductModel } from "@/models/Product";
@@ -7,7 +7,7 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Imagine99 | Diwali gifts, décor and serveware",
-  description: "Handcrafted décor, serveware and festive keepsakes for the festival of lights, with cash on delivery.",
+  description: "Handcrafted décor, serveware and festive keepsakes for the festival of lights. Everything at ₹149, ₹249 or ₹399.",
 };
 
 const FESTIVE = ["Pooja Essentials", "Festive Gifting", "Lighting & Candles"];
@@ -35,11 +35,12 @@ async function latestReviews() {
 }
 
 export default async function HomePage() {
-  const [newArrivals, bestSellers, festivePicks, categories, reviews] = await Promise.all([
+  const [newArrivals, bestSellers, festivePicks, categories, tierCounts, reviews] = await Promise.all([
     getProducts({ festive: true, sort: "latest", limit: 8, inStockOnly: true }),
     getProducts({ bestseller: true, sort: "popular", limit: 4, inStockOnly: true }),
     getProducts({ festive: true, bestseller: true, sort: "latest", limit: 1, inStockOnly: true }),
     getCategories(),
+    getTierCounts(),
     latestReviews(),
   ]);
   return (
@@ -51,6 +52,7 @@ export default async function HomePage() {
         // Festive categories lead during Diwali, then the largest; 12 fit two neat rows.
         .sort((x, y) => Number(FESTIVE.includes(y.name)) - Number(FESTIVE.includes(x.name)) || y.count - x.count)
         .slice(0, 12)}
+      tierCounts={tierCounts}
       reviews={reviews}
     />
   );

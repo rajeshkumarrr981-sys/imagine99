@@ -9,6 +9,7 @@ import { Forbidden, requireAdmin } from "@/components/Admin/guard";
 import ProductForm from "@/components/Admin/ProductForm";
 import DeleteProductButton from "@/components/Admin/DeleteProductButton";
 import { readSupplierSource } from "@/components/Admin/format";
+import { money } from "@/lib/pricing";
 
 export const metadata: Metadata = { title: "Edit product" };
 
@@ -29,6 +30,8 @@ export default async function EditProductPage({ params }: Props) {
   const sameImages = previews.length === thumbnails.length && previews.every((p, i) => p === thumbnails[i]);
   // Admin only: supplier details used by staff to reorder.
   const supplier = readSupplierSource(product.source);
+  // Our selling price (the tier price), to compare against the supplier's prices.
+  const ourPrice = typeof product.discountedPrice === "number" ? product.discountedPrice : null;
 
   return (
     <div className="max-w-[800px] mx-auto">
@@ -82,6 +85,26 @@ export default async function EditProductPage({ params }: Props) {
             <div>
               <dt className="text-dark-4">Supplier product type</dt>
               <dd className="text-dark">{supplier.type || "—"}</dd>
+            </div>
+            <div>
+              <dt className="text-dark-4">Supplier MRP</dt>
+              <dd className="text-dark">{supplier.mrp != null ? money(supplier.mrp) : "—"}</dd>
+            </div>
+            <div>
+              <dt className="text-dark-4">Supplier price</dt>
+              <dd className="text-dark">{supplier.salePrice != null ? money(supplier.salePrice) : "—"}</dd>
+            </div>
+            <div>
+              <dt className="text-dark-4">Our price</dt>
+              <dd className="text-dark font-medium">
+                {ourPrice != null ? money(ourPrice) : "—"}
+                {ourPrice != null && supplier.salePrice != null && supplier.salePrice !== ourPrice && (
+                  <span className="block text-custom-xs font-normal text-dark-4">
+                    {money(Math.abs(supplier.salePrice - ourPrice))}{" "}
+                    {supplier.salePrice > ourPrice ? "below" : "above"} supplier price
+                  </span>
+                )}
+              </dd>
             </div>
           </dl>
           {supplier.url && (

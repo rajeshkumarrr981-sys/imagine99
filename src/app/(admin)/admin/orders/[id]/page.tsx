@@ -14,14 +14,18 @@ import {
   thumb,
   type SupplierSource,
 } from "@/components/Admin/format";
+import { TAX_LABEL } from "@/lib/pricing";
 import OrderStatusSelect from "@/components/Admin/OrderStatusSelect";
 import StatusBadge from "@/components/Admin/StatusBadge";
+import PaymentBadge from "@/components/Admin/PaymentBadge";
+import PaymentActions from "@/components/Admin/PaymentActions";
+import CopyButton from "@/components/Admin/CopyButton";
 
 export const metadata: Metadata = { title: "Order" };
 
 type Props = { params: Promise<{ id: string }> };
 
-const PAYMENT_LABELS: Record<string, string> = { cod: "Cash on delivery" };
+const PAYMENT_LABELS: Record<string, string> = { cod: "Cash on delivery (COD)", upi: "UPI" };
 
 export default async function AdminOrderPage({ params }: Props) {
   if (!(await requireAdmin())) return <Forbidden />;
@@ -38,6 +42,10 @@ export default async function AdminOrderPage({ params }: Props) {
   const ref = `#${String(order._id).slice(-6).toUpperCase()}`;
   const addr = order.shippingAddress;
   const items = order.items ?? [];
+  // Orders saved before payments were tracked have no method/status: they were COD.
+  const paymentMethod = order.paymentMethod ?? "cod";
+  const paymentStatus = order.paymentStatus ?? "pending";
+  const canVerifyPayment = paymentMethod === "upi" && (paymentStatus === "submitted" || paymentStatus === "pending");
 
   // Supplier details for fulfilment (admin only). One query for all line items;
   // deleted products or products without a supplier simply have no entry.
@@ -144,6 +152,12 @@ export default async function AdminOrderPage({ params }: Props) {
               <dt>Subtotal</dt>
               <dd className="text-dark">{formatMoney(order.subtotal)}</dd>
             </div>
+            {(order.taxes ?? 0) > 0 && (
+              <div className="flex justify-between">
+                <dt>{TAX_LABEL}</dt>
+                <dd className="text-dark">{formatMoney(order.taxes)}</dd>
+              </div>
+            )}
             <div className="flex justify-between">
               <dt>Shipping</dt>
               <dd className="text-dark">{order.shippingCost ? formatMoney(order.shippingCost) : "Free"}</dd>
@@ -156,6 +170,60 @@ export default async function AdminOrderPage({ params }: Props) {
         </section>
 
         <div className="grid gap-7.5 content-start">
+          <section className="rounded-xl bg-white shadow-1 p-6 text-custom-sm">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <h2 className="font-semibold text-custom-lg text-dark">Payment</h2>
+              <PaymentBadge method={paymentMethod} status={paymentStatus} />
+            </div>
+            <dl className="grid gap-2">
+              <div className="flex justify-between gap-4">
+                <dt>Method</dt>
+                <dd className="text-dark text-right">{PAYMENT_LABELS[paymentMethod] ?? paymentMethod}</dd>
+              </div>
+              {paymentMethod === "upi" && (
+                <div className="flex justify-between items-center gap-4">
+                  <dt className="shrink-0">UTR</dt>
+                  <dd className="flex items-center justify-end gap-2 min-w-0">
+                    {order.paymentRef ? (
+                      <>
+                        <code className="font-mono text-dark bg-gray-1 border border-gray-3 rounded px-2 py-0.5 break-all select-all">
+                          {order.paymentRef}
+                        </code>
+                        <CopyButton value={order.paymentRef} />
+                      </>
+                    ) : (
+                      <span className="text-dark-4">Not submitted yet</span>
+                    )}
+                  </dd>
+                </div>
+              )}
+              {order.paymentSubmittedAt && (
+                <div className="flex justify-between gap-4">
+                  <dt>Submitted</dt>
+                  <dd className="text-dark text-right">{formatDate(order.paymentSubmittedAt, true)}</dd>
+                </div>
+              )}
+              <div className="flex justify-between gap-4">
+                <dt>Paid</dt>
+                <dd className="text-dark text-right">{order.paidAt ? formatDate(order.paidAt, true) : "—"}</dd>
+              </div>
+            </dl>
+            {canVerifyPayment && (
+              <>
+                {paymentStatus === "submitted" ? (
+                  <p className="mt-4 rounded-lg bg-yellow-light-2 text-yellow-dark-2 px-3 py-2 text-custom-xs">
+                    Check the bank app for this UTR and amount ({formatMoney(order.total)}) before confirming.
+                  </p>
+                ) : (
+                  <p className="mt-4 text-custom-xs text-dark-4">
+                    The customer hasn&apos;t entered a UTR yet. Only mark as paid if you can see the payment in the bank app.
+                  </p>
+                )}
+                <PaymentActions orderId={String(order._id)} />
+              </>
+            )}
+          </section>
+
           <section className="rounded-xl bg-white shadow-1 p-6">
             <h2 className="font-semibold text-custom-lg text-dark mb-3">Shipping address</h2>
             {addr ? (
@@ -181,12 +249,6 @@ export default async function AdminOrderPage({ params }: Props) {
           <section className="rounded-xl bg-white shadow-1 p-6 text-custom-sm">
             <h2 className="font-semibold text-custom-lg text-dark mb-3">Details</h2>
             <dl className="grid gap-2">
-              <div className="flex justify-between gap-4">
-                <dt>Payment</dt>
-                <dd className="text-dark text-right">
-                  {PAYMENT_LABELS[order.paymentMethod ?? ""] ?? order.paymentMethod ?? "—"}
-                </dd>
-              </div>
               <div className="flex justify-between gap-4">
                 <dt>Account</dt>
                 <dd className="text-dark text-right break-all">

@@ -2,7 +2,10 @@
 import Link from "next/link";
 import { startTransition, useActionState, type FormEvent, type ReactNode } from "react";
 import { saveProduct, type ProductFormState, type ProductFormValues } from "@/app/(admin)/admin/actions";
+import { PRICE_TIERS, money } from "@/lib/pricing";
 import { adminInputClass, primaryButtonClass, secondaryButtonClass } from "./format";
+
+const TIER_HINT = `Store tiers: ${PRICE_TIERS.map((t) => money(t)).join(", ")}`;
 
 type TextField = Exclude<keyof ProductFormValues, "bestseller" | "festive">;
 
@@ -29,7 +32,7 @@ export default function ProductForm({ productId, initial, categories }: Props) {
   const values = state.values ?? initial;
   const err = state.fieldErrors ?? {};
 
-  const field = (name: keyof ProductFormValues, label: string, input: ReactNode, hint?: string) => (
+  const field = (name: keyof ProductFormValues, label: string, input: ReactNode, hint?: ReactNode) => (
     <div>
       <label htmlFor={name} className="block mb-2 font-medium text-dark">
         {label}
@@ -40,7 +43,7 @@ export default function ProductForm({ productId, initial, categories }: Props) {
           {err[name]}
         </p>
       ) : hint ? (
-        <p className="mt-1.5 text-custom-xs text-dark-4">{hint}</p>
+        <div className="mt-1.5 text-custom-xs text-dark-4">{hint}</div>
       ) : null}
     </div>
   );
@@ -91,7 +94,10 @@ export default function ProductForm({ productId, initial, categories }: Props) {
             "discountedPrice",
             "Discounted price (₹)",
             <input type="number" min={0} step="0.01" required {...inputProps("discountedPrice")} />,
-            "Selling price. Must be ≤ price."
+            <>
+              <p>Selling price. Must be ≤ price.</p>
+              <p>{TIER_HINT}</p>
+            </>
           )}
           {field("stock", "Stock", <input type="number" min={0} step="1" required {...inputProps("stock")} />)}
         </div>

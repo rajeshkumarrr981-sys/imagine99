@@ -3,7 +3,7 @@ import Link from "next/link";
 import Logo from "@/components/Diwali/Logo";
 import Toran from "@/components/Diwali/Toran";
 import Diya from "@/components/Diwali/Diya";
-import { FREE_SHIPPING_OVER, money } from "@/lib/pricing";
+
 
 const columns = [
   {
@@ -11,7 +11,7 @@ const columns = [
     links: [
       { label: "All products", href: "/shop-with-sidebar" },
       { label: "Best sellers", href: "/shop-with-sidebar?sort=popular" },
-      { label: "Gifts under ₹999", href: "/shop-with-sidebar?max=999" },
+      { label: "Everything at ₹149", href: "/shop-with-sidebar?tier=149" },
       { label: "Wishlist", href: "/wishlist" },
     ],
   },
@@ -46,8 +46,7 @@ const Footer = () => {
           <div className="lg:col-span-5">
             <Logo tone="ivory" />
             <p className="mt-5 max-w-[340px] leading-relaxed">
-              Handcrafted décor, serveware and festive keepsakes, chosen for the people you celebrate with. Free shipping over {money(FREE_SHIPPING_OVER)}, and you pay
-              when it arrives.
+              Handcrafted décor, serveware and festive keepsakes, chosen for the people you celebrate with. Everything at ₹149, ₹249 or ₹399, with free shipping on every order.
             </p>
             <div className="mt-7 flex items-end gap-4" aria-hidden="true">
               <Diya size={30} delay={0.2} />

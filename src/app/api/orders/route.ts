@@ -6,7 +6,7 @@ import { currentUser } from "@/lib/auth";
 import { ProductModel } from "@/models/Product";
 import { Order } from "@/models/Order";
 import { User } from "@/models/User";
-import { round2, shippingFor } from "@/lib/pricing";
+import { COD_MIN_ORDER, money, orderTotals } from "@/lib/pricing";
 import { sendOrderConfirmation } from "@/lib/mail";
 
 const text = (max: number) => z.string().trim().min(1, "Required").max(max);
@@ -32,6 +32,7 @@ const schema = z.object({
   }),
   notes: z.string().trim().max(1000).optional().default(""),
   saveAddress: z.boolean().optional().default(false),
+  paymentMethod: z.enum(["cod", "upi"]).default("upi"),
 });
 
 export async function GET() {
@@ -51,7 +52,7 @@ export async function POST(req: Request) {
     const issue = parsed.error.issues[0];
     return NextResponse.json({ error: `${issue.path.join(".")}: ${issue.message}` }, { status: 400 });
   }
-  const { shippingAddress, notes, saveAddress } = parsed.data;
+  const { shippingAddress, notes, saveAddress, paymentMethod } = parsed.data;
 
   // Merge duplicate lines.
   const qtyById = new Map<string, number>();
@@ -61,6 +62,15 @@ export async function POST(req: Request) {
   const products = await ProductModel.find({ _id: { $in: Array.from(qtyById.keys()) } }).lean();
   if (products.length !== qtyById.size) {
     return NextResponse.json({ error: "Some products in your cart no longer exist" }, { status: 409 });
+  }
+
+  // Totals always come from database prices, never from the client.
+  const preview = orderTotals(products.map((p) => ({ price: p.discountedPrice, quantity: qtyById.get(String(p._id))! })));
+  if (paymentMethod === "cod" && !preview.codAllowed) {
+    return NextResponse.json(
+      { error: `Cash on delivery is available on orders of ${money(COD_MIN_ORDER)} or more. Please pay by UPI.` },
+      { status: 400 }
+    );
   }
 
   // Reserve stock one product at a time; undo if any item is short.
@@ -86,8 +96,7 @@ export async function POST(req: Request) {
     price: p.discountedPrice,
     quantity: qtyById.get(String(p._id))!,
   }));
-  const subtotal = round2(items.reduce((sum, i) => sum + i.price * i.quantity, 0));
-  const shippingCost = shippingFor(subtotal);
+  const { subtotal, taxes, shipping: shippingCost, total } = orderTotals(items.map((i) => ({ price: i.price, quantity: i.quantity })));
 
   let order;
   try {
@@ -97,9 +106,11 @@ export async function POST(req: Request) {
       shippingAddress,
       notes,
       subtotal,
+      taxes,
       shippingCost,
-      total: round2(subtotal + shippingCost),
-      paymentMethod: "cod",
+      total,
+      paymentMethod,
+      paymentStatus: "pending",
       status: "pending",
     });
   } catch (err) {
@@ -115,8 +126,10 @@ export async function POST(req: Request) {
     id: String(order._id),
     items: items.map((i) => ({ title: i.title, quantity: i.quantity, price: i.price })),
     subtotal,
+    taxes,
     shippingCost,
     total: order.total,
+    paymentMethod,
     shippingAddress,
   });
 

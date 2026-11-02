@@ -13,7 +13,7 @@ import { addItemToCart } from "@/redux/features/cart-slice";
 import { addItemToWishlist } from "@/redux/features/wishlist-slice";
 import { AppDispatch, useAppSelector } from "@/redux/store";
 import { Product } from "@/types/product";
-import { FREE_SHIPPING_OVER, money } from "@/lib/pricing";
+import { COD_MIN_ORDER, money, TAX_LABEL, taxFor } from "@/lib/pricing";
 
 type Props = {
   product: Product;
@@ -124,6 +124,12 @@ const ShopDetails = ({ product, related, reviews, signedIn, myReview }: Props) =
                 )}
               </h3>
 
+              {taxFor(product.discountedPrice) > 0 && (
+                <p className="-mt-2 mb-5 text-custom-sm text-dark-4">
+                  + {money(taxFor(product.discountedPrice))} {TAX_LABEL.toLowerCase()} at checkout
+                </p>
+              )}
+
               <p className="mb-7.5 text-[17px] leading-relaxed">{product.description}</p>
 
               <div className="flex flex-wrap items-center gap-4.5 pt-7.5 border-t border-gray-3">
@@ -167,11 +173,11 @@ const ShopDetails = ({ product, related, reviews, signedIn, myReview }: Props) =
               <ul className="mt-7 grid sm:grid-cols-2 gap-3 text-custom-sm text-dark-3">
                 <li className="flex items-center gap-2.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-marigold" aria-hidden="true" />
-                  Free shipping on orders over {money(FREE_SHIPPING_OVER)}
+                  Free shipping on every order
                 </li>
                 <li className="flex items-center gap-2.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-marigold" aria-hidden="true" />
-                  Pay with cash on delivery
+                  Pay by UPI · cash on delivery on orders of {money(COD_MIN_ORDER)}+
                 </li>
               </ul>
             </div>

@@ -133,3 +133,13 @@ export async function getCategories(): Promise<{ name: string; count: number; im
   ]);
   return rows.map((r) => ({ name: r._id, count: r.count, image: r.image ?? undefined }));
 }
+
+/** Number of in-stock products at each price. */
+export async function getTierCounts(): Promise<Record<number, number>> {
+  await connectDB();
+  const rows = await ProductModel.aggregate<{ _id: number; n: number }>([
+    { $match: { stock: { $gt: 0 } } },
+    { $group: { _id: "$discountedPrice", n: { $sum: 1 } } },
+  ]);
+  return Object.fromEntries(rows.map((r) => [r._id, r.n]));
+}

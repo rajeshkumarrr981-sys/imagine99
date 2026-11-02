@@ -11,7 +11,7 @@ import { updateQuickView } from "@/redux/features/quickView-slice";
 import { addItemToCart } from "@/redux/features/cart-slice";
 import { addItemToWishlist } from "@/redux/features/wishlist-slice";
 import { AppDispatch, useAppSelector } from "@/redux/store";
-import { money } from "@/lib/pricing";
+import { money, TAX_LABEL, taxFor } from "@/lib/pricing";
 
 const icon = {
   width: 17,
@@ -118,6 +118,9 @@ const ProductItem = ({ item }: { item: Product }) => {
         <p className="mt-2 flex items-baseline gap-2">
           <span className="font-display text-[19px] text-blue">{money(item.discountedPrice)}</span>
           {discount > 0 && <span className="text-custom-sm text-dark-4 line-through">{money(item.price)}</span>}
+          {taxFor(item.discountedPrice) > 0 && (
+            <span className="text-custom-xs text-dark-4">+ {money(taxFor(item.discountedPrice))} {TAX_LABEL.toLowerCase()}</span>
+          )}
         </p>
       </div>
     </article>

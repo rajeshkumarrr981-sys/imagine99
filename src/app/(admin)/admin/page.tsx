@@ -13,14 +13,22 @@ export default async function AdminDashboardPage() {
   if (!(await requireAdmin())) return <Forbidden />;
 
   await connectDB();
-  const [productCount, orderCount, customerCount, revenueRows, lowStock, recentOrders] = await Promise.all([
+  const [productCount, orderCount, customerCount, revenueRows, upiToVerify, lowStock, recentOrders] = await Promise.all([
     ProductModel.countDocuments(),
     Order.countDocuments(),
     User.countDocuments({ role: { $ne: "admin" } }),
     Order.aggregate<{ total: number }>([
-      { $match: { status: { $ne: "cancelled" } } },
+      // Money actually in hand or due on delivery: COD orders (older orders without a
+      // method were COD) and UPI orders staff have confirmed as paid.
+      {
+        $match: {
+          status: { $ne: "cancelled" },
+          $or: [{ paymentMethod: { $ne: "upi" } }, { paymentStatus: "paid" }],
+        },
+      },
       { $group: { _id: null, total: { $sum: "$total" } } },
     ]),
+    Order.countDocuments({ paymentMethod: "upi", paymentStatus: "submitted" }),
     ProductModel.find({ stock: { $lte: LOW_STOCK } })
       .sort({ stock: 1, title: 1 })
       .limit(20)
@@ -30,8 +38,15 @@ export default async function AdminDashboardPage() {
   ]);
   const revenue = revenueRows[0]?.total ?? 0;
 
-  const stats = [
-    { label: "Revenue", value: formatMoney(revenue), hint: "Excludes cancelled orders" },
+  const stats: { label: string; value: string; href?: string; linkLabel?: string; hint?: string; highlight?: boolean }[] = [
+    { label: "Revenue", value: formatMoney(revenue), hint: "COD + confirmed UPI, excl. cancelled" },
+    {
+      label: "UPI to verify",
+      value: upiToVerify.toLocaleString("en-IN"),
+      href: "/admin/orders?payment=check",
+      linkLabel: upiToVerify > 0 ? "Check payments" : "View",
+      highlight: upiToVerify > 0,
+    },
     { label: "Orders", value: orderCount.toLocaleString("en-IN"), href: "/admin/orders" },
     { label: "Products", value: productCount.toLocaleString("en-IN"), href: "/admin/products" },
     { label: "Customers", value: customerCount.toLocaleString("en-IN") },
@@ -41,14 +56,17 @@ export default async function AdminDashboardPage() {
     <div className="max-w-[1170px] mx-auto">
       <h1 className="font-semibold text-heading-6 text-dark mb-7.5">Dashboard</h1>
 
-      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4 mb-7.5">
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 mb-7.5">
         {stats.map((s) => (
-          <div key={s.label} className="rounded-xl bg-white shadow-1 p-6">
+          <div
+            key={s.label}
+            className={`rounded-xl bg-white shadow-1 p-6 ${s.highlight ? "ring-2 ring-yellow-light-2" : ""}`}
+          >
             <p className="text-custom-sm text-dark-4 mb-1">{s.label}</p>
-            <p className="font-semibold text-custom-2xl text-dark">{s.value}</p>
+            <p className={`font-semibold text-custom-2xl ${s.highlight ? "text-yellow-dark-2" : "text-dark"}`}>{s.value}</p>
             {s.href ? (
               <Link href={s.href} className="text-custom-xs text-blue hover:underline">
-                View all
+                {s.linkLabel ?? "View all"}
               </Link>
             ) : s.hint ? (
               <p className="text-custom-xs text-dark-4">{s.hint}</p>

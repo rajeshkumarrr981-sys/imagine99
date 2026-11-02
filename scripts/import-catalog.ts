@@ -10,6 +10,7 @@
 import { readFileSync } from "node:fs";
 import mongoose from "mongoose";
 import { ProductModel } from "../src/models/Product";
+import { tierFor } from "../src/lib/pricing";
 
 type Variant = { price: string; compare_at_price: string | null; available: boolean };
 type Item = {
@@ -128,6 +129,11 @@ function toProduct(item: Item, includeSoldOut: boolean) {
   const sale = num(v?.price);
   if (!(sale > 0)) return { skip: "no price" as const };
   const compare = num(v.compare_at_price);
+  const mrp = compare > sale ? compare : sale;
+  // Store pricing: every product sells at a fixed tier (₹149 / ₹249 / ₹399) chosen
+  // from its original price. Never sell above MRP.
+  const tierPrice = tierFor(sale);
+  if (tierPrice > mrp) return { skip: "MRP below tier price" as const };
 
   const images = [...(item.images ?? [])]
     .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
@@ -145,8 +151,8 @@ function toProduct(item: Item, includeSoldOut: boolean) {
       title: cleanTitle(item.title, brand),
       description: cleanDescription(item.body_html ?? "", brand),
       category,
-      price: compare > sale ? compare : sale,
-      discountedPrice: sale,
+      price: mrp,
+      discountedPrice: tierPrice,
       stock: item.available ? DEFAULT_STOCK : 0,
       images: { thumbnails: images, previews: images },
       bestseller: tags.some((t) => /best\s?seller/i.test(t)),
@@ -158,6 +164,8 @@ function toProduct(item: Item, includeSoldOut: boolean) {
         sku: (v as Variant & { sku?: string }).sku ?? "",
         url: item.url ?? "",
         type: item.product_type ?? "",
+        mrp,
+        salePrice: sale,
       },
     },
   };
@@ -196,6 +204,9 @@ async function main() {
   console.log(`Products ready: ${all.length}`);
   console.log("Skipped:", skipped);
   console.log("By category:", Object.fromEntries([...byCat].sort((a, b) => b[1] - a[1])));
+  const byTier = new Map<number, number>();
+  for (const d of all) byTier.set(d.discountedPrice, (byTier.get(d.discountedPrice) ?? 0) + 1);
+  console.log("By price tier:", Object.fromEntries([...byTier].sort((a, b) => a[0] - b[0])));
   console.log(`Best sellers: ${all.filter((d) => d.bestseller).length}, festive: ${all.filter((d) => d.festive).length}`);
   if (unmatched.size) console.log("Fell back to Home Décor:", Object.fromEntries(unmatched));
 

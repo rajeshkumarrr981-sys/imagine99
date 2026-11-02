@@ -3,6 +3,11 @@ import { Schema, model, models, type InferSchemaType, type Model } from "mongoos
 export const ORDER_STATUSES = ["pending", "processing", "shipped", "delivered", "cancelled"] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
+export const PAYMENT_METHODS = ["cod", "upi"] as const;
+// pending: not paid yet (COD, or UPI not submitted) · submitted: customer entered a UTR · paid: staff confirmed
+export const PAYMENT_STATUSES = ["pending", "submitted", "paid", "failed"] as const;
+export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
+
 const OrderItemSchema = new Schema(
   {
     product: { type: Schema.Types.ObjectId, ref: "Product", required: true },
@@ -29,10 +34,15 @@ const OrderSchema = new Schema(
     },
     notes: String,
     subtotal: { type: Number, required: true },
+    taxes: { type: Number, default: 0 },
     shippingCost: { type: Number, required: true },
     total: { type: Number, required: true },
-    // No payment provider yet: orders are created unpaid ("pay on delivery").
-    paymentMethod: { type: String, default: "cod" },
+    // "cod" = cash on delivery (orders of ₹2,499+), "upi" = paid by UPI and verified by staff.
+    paymentMethod: { type: String, enum: PAYMENT_METHODS, default: "cod" },
+    paymentStatus: { type: String, enum: PAYMENT_STATUSES, default: "pending", index: true },
+    paymentRef: { type: String, trim: true }, // UPI transaction ID (UTR) entered by the customer
+    paymentSubmittedAt: Date,
+    paidAt: Date,
     status: { type: String, enum: ORDER_STATUSES, default: "pending", index: true },
   },
   { timestamps: true }

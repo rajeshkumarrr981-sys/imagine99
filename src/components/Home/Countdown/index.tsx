@@ -68,7 +68,7 @@ const Countdown = () => {
                     Counting down to <span className="italic text-marigold">Lakshmi Puja</span>
                   </h2>
                   <p className="mt-4 max-w-[420px] text-ivory/70">
-                    Order early so your gifts arrive before the lamps are lit. Every order ships with cash on delivery.
+                    Order early so your gifts arrive before the lamps are lit. Everything is ₹149, ₹249 or ₹399, shipped free.
                   </p>
                 </>
               )}

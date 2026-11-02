@@ -7,7 +7,9 @@ import Breadcrumb from "@/components/Common/Breadcrumb";
 import { currentUser } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { Order } from "@/models/Order";
-import { money } from "@/lib/pricing";
+import QRCode from "qrcode";
+import UpiPayment from "@/components/Orders/UpiPayment";
+import { money, TAX_LABEL } from "@/lib/pricing";
 
 export const metadata: Metadata = { title: "Order | Imagine99" };
 
@@ -32,6 +34,21 @@ export default async function OrderPage({
   const a = order.shippingAddress;
   const shortId = String(order._id).slice(-8).toUpperCase();
 
+  // UPI payment details (only for UPI orders that still need paying)
+  const upiId = process.env.UPI_ID ?? "";
+  const payeeName = process.env.UPI_PAYEE_NAME ?? "Imagine99";
+  const needsUpi = order.paymentMethod === "upi" && ["pending", "failed"].includes(order.paymentStatus ?? "pending") && order.status !== "cancelled" && !!upiId;
+  const upiLink = `upi://pay?${new URLSearchParams({ pa: upiId, pn: payeeName, am: order.total.toFixed(2), cu: "INR", tn: `Imagine99 order ${shortId}` }).toString()}`;
+  const qrSvg = needsUpi ? await QRCode.toString(upiLink, { type: "svg", margin: 0, color: { dark: "#2B1B22", light: "#FFFFFF" } }) : "";
+  const paymentNote =
+    order.paymentMethod === "cod"
+      ? "Cash on delivery"
+      : order.paymentStatus === "paid"
+        ? "Paid by UPI"
+        : order.paymentStatus === "submitted"
+          ? `UPI · verifying (ref ${order.paymentRef})`
+          : "UPI · awaiting payment";
+
   return (
     <main>
       <Breadcrumb title={`Order #${shortId}`} pages={["Account", "Orders"]} />
@@ -39,7 +56,27 @@ export default async function OrderPage({
         <div className="max-w-[870px] w-full mx-auto px-4 sm:px-8 xl:px-0">
           {placed && (
             <div className="bg-green-light-6 text-green rounded-[10px] px-6 py-4 mb-7.5">
-              Thank you! Your order has been placed. A confirmation email is on its way to {a.email}.
+              Thank you! Your order has been placed.{" "}
+              {needsUpi ? "Complete the UPI payment below so we can ship it." : `A confirmation email is on its way to ${a.email}.`}
+            </div>
+          )}
+
+          {needsUpi && (
+            <UpiPayment
+              orderId={String(order._id)}
+              amount={order.total}
+              upiId={upiId}
+              payeeName={payeeName}
+              upiLink={upiLink}
+              qrSvg={qrSvg}
+              failed={order.paymentStatus === "failed"}
+            />
+          )}
+
+          {order.paymentMethod === "upi" && order.paymentStatus === "submitted" && (
+            <div className="bg-marigold-wash border border-marigold/50 text-dark rounded-[10px] px-6 py-4 mb-7.5">
+              Thanks! We&apos;re verifying your UPI payment (ref <span className="font-mono">{order.paymentRef}</span>). Your order ships once
+              it&apos;s confirmed, usually within a few hours.
             </div>
           )}
 
@@ -95,13 +132,18 @@ export default async function OrderPage({
                 <p className="flex justify-between">
                   <span>Subtotal</span> <span className="text-dark">{money(order.subtotal)}</span>
                 </p>
+                {(order.taxes ?? 0) > 0 && (
+                  <p className="flex justify-between mt-1">
+                    <span>{TAX_LABEL}</span> <span className="text-dark">{money(order.taxes ?? 0)}</span>
+                  </p>
+                )}
                 <p className="flex justify-between mt-1">
                   <span>Shipping</span> <span className="text-dark">{order.shippingCost ? money(order.shippingCost) : "Free"}</span>
                 </p>
                 <p className="flex justify-between mt-3 font-medium text-lg text-dark">
                   <span>Total</span> <span>{money(order.total)}</span>
                 </p>
-                <p className="text-custom-sm mt-1">Payment: cash on delivery</p>
+                <p className="text-custom-sm mt-1">Payment: {paymentNote}</p>
               </div>
             </div>
           </div>

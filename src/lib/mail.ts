@@ -1,12 +1,14 @@
 import "server-only";
 import nodemailer from "nodemailer";
-import { money } from "@/lib/pricing";
+import { money, TAX_LABEL } from "@/lib/pricing";
 
 type MailOrder = {
   id: string;
   items: { title: string; quantity: number; price: number }[];
   subtotal: number;
+  taxes: number;
   shippingCost: number;
+  paymentMethod: "cod" | "upi";
   total: number;
   shippingAddress: { name: string; email: string; address: string; city: string; country: string; zip?: string };
 };
@@ -37,9 +39,14 @@ export async function sendOrderConfirmation(order: MailOrder) {
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#1c274c">
       <h2>Thanks for your order, ${escape(a.name)}!</h2>
-      <p>Order <strong>#${shortId}</strong> has been received. You'll pay on delivery.</p>
+      <p>Order <strong>#${shortId}</strong> has been received. ${
+        order.paymentMethod === "cod"
+          ? "You'll pay in cash on delivery."
+          : "If you haven't paid yet, open your order and pay by UPI, then enter the UPI transaction ID. We'll ship once the payment is confirmed."
+      }</p>
       <table style="width:100%;border-collapse:collapse">${rows}
         <tr><td style="padding-top:12px">Subtotal</td><td style="text-align:right;padding-top:12px">${money(order.subtotal)}</td></tr>
+        ${order.taxes ? `<tr><td>${TAX_LABEL}</td><td style="text-align:right">${money(order.taxes)}</td></tr>` : ""}
         <tr><td>Shipping</td><td style="text-align:right">${order.shippingCost ? money(order.shippingCost) : "Free"}</td></tr>
         <tr><td><strong>Total</strong></td><td style="text-align:right"><strong>${money(order.total)}</strong></td></tr>
       </table>
