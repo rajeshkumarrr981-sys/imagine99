@@ -115,7 +115,7 @@ const Header = () => {
                   type="search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search gifts, gadgets…"
+                  placeholder="Search décor, serveware, gifts…"
                   autoComplete="off"
                   className="custom-search w-full rounded-full bg-white border border-gray-3 py-2.5 pl-5 pr-11 text-custom-sm text-dark placeholder:text-dark-4 outline-none ease-out duration-200 focus:border-brass"
                 />
@@ -186,7 +186,7 @@ const Header = () => {
                   type="search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search gifts, gadgets…"
+                  placeholder="Search décor, serveware, gifts…"
                   aria-label="Search products"
                   className="w-full rounded-full bg-white border border-gray-3 py-2.5 px-5 text-custom-sm outline-none focus:border-brass"
                 />

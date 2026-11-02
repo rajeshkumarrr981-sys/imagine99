@@ -48,14 +48,14 @@ const ProductItem = ({ item }: { item: Product }) => {
   return (
     <article className="group">
       <div className="relative overflow-hidden rounded-2xl bg-gray-2 border border-transparent ease-out duration-300 group-hover:border-brass/50">
-        <Link href={href} className="flex items-center justify-center aspect-[4/4.2] p-8" aria-label={item.title}>
+        <Link href={href} className="relative block aspect-[4/4.4]" aria-label={item.title}>
           {item.imgs.previews[0] && (
             <Image
               src={item.imgs.previews[0]}
               alt={item.title}
-              width={240}
-              height={240}
-              className="w-auto max-h-[78%] ease-out duration-500 group-hover:scale-[1.04]"
+              fill
+              sizes="(min-width: 1024px) 280px, (min-width: 640px) 45vw, 90vw"
+              className="object-cover ease-out duration-500 group-hover:scale-[1.04]"
             />
           )}
         </Link>
@@ -108,7 +108,7 @@ const ProductItem = ({ item }: { item: Product }) => {
 
       <div className="pt-4 px-1">
         <p className="text-[11px] uppercase tracking-[0.16em] text-dark-4">{item.category}</p>
-        <h3 className="mt-1.5 font-medium text-dark leading-snug ease-out duration-200 hover:text-blue">
+        <h3 className="mt-1.5 font-medium text-dark leading-snug line-clamp-2 ease-out duration-200 hover:text-blue">
           <Link href={href}>{item.title}</Link>
         </h3>
         <div className="mt-2 flex items-center gap-2">

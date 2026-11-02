@@ -11,7 +11,7 @@ const columns = [
     links: [
       { label: "All products", href: "/shop-with-sidebar" },
       { label: "Best sellers", href: "/shop-with-sidebar?sort=popular" },
-      { label: "Gifts under ₹5,000", href: "/shop-with-sidebar?max=5000" },
+      { label: "Gifts under ₹999", href: "/shop-with-sidebar?max=999" },
       { label: "Wishlist", href: "/wishlist" },
     ],
   },
@@ -46,7 +46,7 @@ const Footer = () => {
           <div className="lg:col-span-5">
             <Logo tone="ivory" />
             <p className="mt-5 max-w-[340px] leading-relaxed">
-              Considered tech and keepsakes, chosen for the people you celebrate with. Free shipping over {money(FREE_SHIPPING_OVER)}, and you pay
+              Handcrafted décor, serveware and festive keepsakes, chosen for the people you celebrate with. Free shipping over {money(FREE_SHIPPING_OVER)}, and you pay
               when it arrives.
             </p>
             <div className="mt-7 flex items-end gap-4" aria-hidden="true">

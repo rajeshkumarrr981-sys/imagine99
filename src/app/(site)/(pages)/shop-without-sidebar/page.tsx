@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 const ShopWithoutSidebarPage = async () => {
-  const products = await getProducts({ limit: 100 });
+  const products = await getProducts({ limit: 48 });
   return (
     <main>
       <ShopWithoutSidebar products={products} />

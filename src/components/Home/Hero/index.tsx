@@ -50,7 +50,7 @@ const Hero = ({ featured }: { featured?: Product }) => {
                 Gifts that <em className="text-marigold italic">glow</em> long after the diyas are lit.
               </h1>
               <p className="mt-6 max-w-[460px] text-[17px] leading-[1.7] text-ivory/70">
-                Considered tech and keepsakes for the festival of lights. Chosen with care, delivered to your door, and paid for when it arrives.
+                Handcrafted décor, serveware and festive keepsakes for the festival of lights. Chosen with care, delivered to your door, and paid for when it arrives.
               </p>
               <div className="mt-9 flex flex-wrap items-center gap-6">
                 <Link
@@ -80,17 +80,17 @@ const Hero = ({ featured }: { featured?: Product }) => {
                   />
                   <Link
                     href={`/shop-details/${featured.id}`}
-                    className="absolute inset-8 flex items-center justify-center"
+                    className="absolute inset-10 rounded-full overflow-hidden ring-4 ring-brass/40"
                     aria-label={featured.title}
                   >
                     {featured.imgs.previews[0] && (
                       <Image
                         src={featured.imgs.previews[0]}
                         alt={featured.title}
-                        width={260}
-                        height={260}
+                        fill
                         priority
-                        className="w-[62%] h-auto drop-shadow-[0_18px_22px_rgba(43,27,34,0.35)]"
+                        sizes="400px"
+                        className="object-cover"
                       />
                     )}
                   </Link>

@@ -4,6 +4,8 @@ import { startTransition, useActionState, type FormEvent, type ReactNode } from 
 import { saveProduct, type ProductFormState, type ProductFormValues } from "@/app/(admin)/admin/actions";
 import { adminInputClass, primaryButtonClass, secondaryButtonClass } from "./format";
 
+type TextField = Exclude<keyof ProductFormValues, "bestseller" | "festive">;
+
 type Props = {
   productId?: string;
   initial: ProductFormValues;
@@ -43,7 +45,7 @@ export default function ProductForm({ productId, initial, categories }: Props) {
     </div>
   );
 
-  const inputProps = (name: keyof ProductFormValues) => ({
+  const inputProps = (name: TextField) => ({
     id: name,
     name,
     defaultValue: values[name],
@@ -103,7 +105,7 @@ export default function ProductForm({ productId, initial, categories }: Props) {
             {...inputProps("previews")}
             className={`${inputProps("previews").className} font-mono text-custom-sm`}
           />,
-          "One path per line, e.g. /images/products/product-1-bg-1.png. The first one is the main image."
+          "One per line: a site path (e.g. /images/products/product-1-bg-1.png) or a full https:// image URL (e.g. https://cdn.shopify.com/...). The first one is the main image."
         )}
 
         {field(
@@ -115,8 +117,34 @@ export default function ProductForm({ productId, initial, categories }: Props) {
             {...inputProps("thumbnails")}
             className={`${inputProps("thumbnails").className} font-mono text-custom-sm`}
           />,
-          "One path per line. Leave empty to reuse the preview images."
+          "One per line, site path or full https:// URL. Leave empty to reuse the preview images."
         )}
+
+        <fieldset>
+          <legend className="block mb-2 font-medium text-dark">Merchandising</legend>
+          <div className="flex flex-wrap gap-x-7.5 gap-y-3">
+            <label className="inline-flex items-center gap-2.5 cursor-pointer text-dark">
+              <input
+                type="checkbox"
+                name="bestseller"
+                value="true"
+                defaultChecked={values.bestseller}
+                className="w-4 h-4 accent-blue"
+              />
+              Best seller
+            </label>
+            <label className="inline-flex items-center gap-2.5 cursor-pointer text-dark">
+              <input
+                type="checkbox"
+                name="festive"
+                value="true"
+                defaultChecked={values.festive}
+                className="w-4 h-4 accent-blue"
+              />
+              Festive / Diwali pick
+            </label>
+          </div>
+        </fieldset>
       </div>
 
       <div className="flex flex-wrap gap-3 mt-7.5">

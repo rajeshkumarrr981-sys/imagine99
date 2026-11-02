@@ -2,8 +2,8 @@ import Link from "next/link";
 import SectionHeading from "@/components/Diwali/SectionHeading";
 
 const budgets = [
-  { label: "Under ₹5,000", note: "Thoughtful little extras", max: 5000, tone: "bg-marigold-wash" },
-  { label: "Under ₹25,000", note: "For family and close friends", max: 25000, tone: "bg-blue-light-5" },
+  { label: "Under ₹999", note: "Thoughtful little extras", max: 999, tone: "bg-marigold-wash" },
+  { label: "Under ₹2,499", note: "For family and close friends", max: 2499, tone: "bg-blue-light-5" },
   { label: "Something special", note: "The gift they will remember", max: null, sort: "price-desc", tone: "bg-gray-2" },
 ];
 

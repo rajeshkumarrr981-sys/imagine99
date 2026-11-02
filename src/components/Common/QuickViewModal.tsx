@@ -300,7 +300,7 @@ const QuickViewModal = () => {
                     </defs>
                   </svg>
 
-                  <span className="font-medium text-dark"> {product.stock > 0 ? `In Stock (${product.stock})` : "Out of Stock"} </span>
+                  <span className="font-medium text-dark"> {product.stock <= 0 ? "Out of stock" : product.stock <= 5 ? `Only ${product.stock} left` : "In stock"} </span>
                 </div>
               </div>
 

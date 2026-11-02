@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seed": "tsx --env-file=.env.local scripts/seed.ts"
+    "seed": "tsx --env-file=.env.local scripts/seed.ts",
+    "import": "tsx --env-file=.env.local scripts/import-catalog.ts"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.6.1",

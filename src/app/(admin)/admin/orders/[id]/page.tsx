@@ -4,8 +4,16 @@ import { notFound } from "next/navigation";
 import { isValidObjectId } from "mongoose";
 import { connectDB } from "@/lib/db";
 import { Order, ORDER_STATUSES } from "@/models/Order";
+import { ProductModel } from "@/models/Product";
 import { Forbidden, requireAdmin } from "@/components/Admin/guard";
-import { countItems, formatDate, formatMoney } from "@/components/Admin/format";
+import {
+  countItems,
+  formatDate,
+  formatMoney,
+  readSupplierSource,
+  thumb,
+  type SupplierSource,
+} from "@/components/Admin/format";
 import OrderStatusSelect from "@/components/Admin/OrderStatusSelect";
 import StatusBadge from "@/components/Admin/StatusBadge";
 
@@ -30,6 +38,18 @@ export default async function AdminOrderPage({ params }: Props) {
   const ref = `#${String(order._id).slice(-6).toUpperCase()}`;
   const addr = order.shippingAddress;
   const items = order.items ?? [];
+
+  // Supplier details for fulfilment (admin only). One query for all line items;
+  // deleted products or products without a supplier simply have no entry.
+  const productIds = [...new Set(items.map((item) => String(item.product)).filter((pid) => isValidObjectId(pid)))];
+  const supplierRows = productIds.length
+    ? await ProductModel.find({ _id: { $in: productIds } }).select("source").lean()
+    : [];
+  const suppliers = new Map<string, SupplierSource>();
+  for (const row of supplierRows) {
+    const source = readSupplierSource(row.source);
+    if (source) suppliers.set(String(row._id), source);
+  }
 
   return (
     <div className="max-w-[1170px] mx-auto">
@@ -70,28 +90,52 @@ export default async function AdminOrderPage({ params }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {items.map((item, idx) => (
-                  <tr key={`${String(item.product)}-${idx}`} className="border-t border-gray-3">
-                    <td className="px-6 py-3">
-                      <div className="flex items-center gap-3 min-w-[220px]">
-                        <div className="w-12 h-12 shrink-0 rounded-lg bg-gray-2 overflow-hidden flex items-center justify-center">
-                          {item.image && (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={item.image} alt="" className="w-full h-full object-contain" loading="lazy" />
-                          )}
+                {items.map((item, idx) => {
+                  const supplier = suppliers.get(String(item.product));
+                  return (
+                    <tr key={`${String(item.product)}-${idx}`} className="border-t border-gray-3">
+                      <td className="px-6 py-3">
+                        <div className="flex items-center gap-3 min-w-[220px]">
+                          <div className="w-12 h-12 shrink-0 rounded-lg bg-gray-2 overflow-hidden flex items-center justify-center">
+                            {item.image && (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={thumb(item.image)} alt="" className="w-full h-full object-contain" loading="lazy" />
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <Link href={`/admin/products/${String(item.product)}/edit`} className="text-dark hover:text-blue">
+                              {item.title}
+                            </Link>
+                            {supplier && (
+                              <p className="mt-0.5 text-custom-xs text-dark-4">
+                                Supplier: {supplier.brand}
+                                {supplier.sku && <> · SKU {supplier.sku}</>}
+                                {supplier.url && (
+                                  <>
+                                    {" · "}
+                                    <a
+                                      href={supplier.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-blue hover:underline"
+                                    >
+                                      Open ↗
+                                    </a>
+                                  </>
+                                )}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                        <Link href={`/admin/products/${String(item.product)}/edit`} className="text-dark hover:text-blue">
-                          {item.title}
-                        </Link>
-                      </div>
-                    </td>
-                    <td className="px-6 py-3 text-right whitespace-nowrap">{formatMoney(item.price)}</td>
-                    <td className="px-6 py-3 text-right">{item.quantity}</td>
-                    <td className="px-6 py-3 text-right whitespace-nowrap text-dark">
-                      {formatMoney(item.price * item.quantity)}
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="px-6 py-3 text-right whitespace-nowrap">{formatMoney(item.price)}</td>
+                      <td className="px-6 py-3 text-right">{item.quantity}</td>
+                      <td className="px-6 py-3 text-right whitespace-nowrap text-dark">
+                        {formatMoney(item.price * item.quantity)}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

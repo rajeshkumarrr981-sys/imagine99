@@ -29,6 +29,8 @@ export default async function NewProductPage() {
             stock: "0",
             previews: "",
             thumbnails: "",
+            bestseller: false,
+            festive: false,
           }}
         />
       </div>

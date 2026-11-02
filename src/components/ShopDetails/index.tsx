@@ -70,7 +70,7 @@ const ShopDetails = ({ product, related, reviews, signedIn, myReview }: Props) =
           <div className="flex flex-col lg:flex-row gap-7.5 xl:gap-17.5">
             {/* gallery */}
             <div className="lg:max-w-[570px] w-full">
-              <div className="lg:min-h-[512px] rounded-2xl bg-gray-2 p-4 sm:p-7.5 relative flex items-center justify-center">
+              <div className="relative aspect-square rounded-2xl bg-gray-2 overflow-hidden">
                 <button
                   onClick={openPreviewModal}
                   aria-label="Open image preview"
@@ -81,7 +81,7 @@ const ShopDetails = ({ product, related, reviews, signedIn, myReview }: Props) =
                     <path d="M16.765 2.64893C15.823 2.52227 14.5812 2.52081 12.8333 2.52081C12.4536 2.52081 12.1458 2.21301 12.1458 1.83331C12.1458 1.45362 12.4536 1.14581 12.8333 1.14581L12.885 1.14581C14.5696 1.1458 15.904 1.14579 16.9483 1.28619C18.023 1.43068 18.8928 1.73512 19.5788 2.42112C20.2648 3.10712 20.5693 3.97699 20.7138 5.05171C20.8542 6.09599 20.8542 7.43032 20.8541 9.11494V9.16665C20.8541 9.54634 20.5463 9.85415 20.1666 9.85415C19.787 9.85415 19.4791 9.54634 19.4791 9.16665C19.4791 7.41873 19.4777 6.17695 19.351 5.23492C19.227 4.31268 18.9945 3.78133 18.6066 3.39339C18.2186 3.00545 17.6873 2.77292 16.765 2.64893Z" />
                   </svg>
                 </button>
-                {preview && <Image src={preview} alt={product.title} width={400} height={400} priority />}
+                {preview && <Image src={preview} alt={product.title} fill priority sizes="(min-width: 1024px) 570px, 100vw" className="object-cover" />}
               </div>
 
               <div className="flex flex-wrap sm:flex-nowrap gap-4.5 mt-6">
@@ -94,7 +94,7 @@ const ShopDetails = ({ product, related, reviews, signedIn, myReview }: Props) =
                       key === previewImg ? "border-brass" : "border-transparent"
                     }`}
                   >
-                    <Image width={50} height={50} src={item} alt="" />
+                    <Image width={100} height={100} src={item} alt="" className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
@@ -113,7 +113,7 @@ const ShopDetails = ({ product, related, reviews, signedIn, myReview }: Props) =
                   </span>
                 </div>
                 <span className={inStock ? "text-green" : "text-red"}>
-                  {inStock ? `In Stock (${product.stock})` : "Out of Stock"}
+                  {!inStock ? "Out of stock" : product.stock <= 5 ? `Only ${product.stock} left` : "In stock"}
                 </span>
               </div>
 

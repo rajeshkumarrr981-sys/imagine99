@@ -15,11 +15,30 @@ const ProductSchema = new Schema(
     // Kept in sync whenever a review is added.
     reviewCount: { type: Number, default: 0 },
     rating: { type: Number, default: 0 },
+
+    // Merchandising flags (set by the catalogue import or the admin).
+    bestseller: { type: Boolean, default: false, index: true },
+    festive: { type: Boolean, default: false, index: true },
+    // When the product first went on sale; used for "new arrivals".
+    publishedAt: { type: Date, default: Date.now, index: true },
+
+    // Supplier details for fulfilment. Admin only: never sent to the storefront.
+    source: {
+      key: { type: String }, // "<site>:<product id>", unique per supplier product
+      brand: String,
+      sku: String,
+      url: String,
+      // the supplier's own product type ("type" needs the object form, or Mongoose
+      // reads the whole `source` field as a string)
+      type: { type: String },
+    },
   },
   { timestamps: true }
 );
 
 ProductSchema.index({ title: "text", description: "text" });
+ProductSchema.index({ "source.key": 1 }, { unique: true, sparse: true });
+ProductSchema.index({ category: 1, discountedPrice: 1 });
 
 export type ProductDoc = InferSchemaType<typeof ProductSchema>;
 

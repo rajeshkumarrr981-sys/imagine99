@@ -3,22 +3,57 @@ import Link from "next/link";
 import { connectDB } from "@/lib/db";
 import { ProductModel } from "@/models/Product";
 import { Forbidden, requireAdmin } from "@/components/Admin/guard";
-import { adminInputClass, formatMoney, primaryButtonClass, secondaryButtonClass } from "@/components/Admin/format";
+import {
+  adminInputClass,
+  formatMoney,
+  primaryButtonClass,
+  readSupplierSource,
+  secondaryButtonClass,
+  thumb,
+} from "@/components/Admin/format";
 import DeleteProductButton from "@/components/Admin/DeleteProductButton";
 
 export const metadata: Metadata = { title: "Products" };
 
-type Props = { searchParams: Promise<{ q?: string | string[] }> };
+const PAGE_SIZE = 50;
+
+type Props = {
+  searchParams: Promise<{ q?: string | string[]; category?: string | string[]; page?: string | string[] }>;
+};
+
+const first = (v?: string | string[]) => (Array.isArray(v) ? v[0] : v);
+
+const badgeClass = "inline-block rounded-full px-2 py-0.5 text-custom-xs font-medium";
 
 export default async function AdminProductsPage({ searchParams }: Props) {
   if (!(await requireAdmin())) return <Forbidden />;
 
-  const { q: rawQ } = await searchParams;
-  const q = (Array.isArray(rawQ) ? rawQ[0] : rawQ)?.trim().slice(0, 100) ?? "";
+  const sp = await searchParams;
+  const q = first(sp.q)?.trim().slice(0, 100) ?? "";
+  const rawCategory = first(sp.category)?.trim().slice(0, 100) ?? "";
+  const requestedPage = Math.max(1, Math.floor(Number(first(sp.page)) || 1));
 
   await connectDB();
-  const filter = q ? { title: { $regex: q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" } } : {};
-  const docs = await ProductModel.find(filter).sort({ createdAt: -1 }).limit(500).lean();
+  const allCategories = (await ProductModel.distinct("category"))
+    .filter((c): c is string => typeof c === "string" && c.trim() !== "")
+    .sort((a, b) => a.localeCompare(b));
+  // Only filter by categories that actually exist.
+  const category = allCategories.includes(rawCategory) ? rawCategory : "";
+
+  const filter: Record<string, unknown> = {};
+  if (q) filter.title = { $regex: q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" };
+  if (category) filter.category = category;
+
+  const total = await ProductModel.countDocuments(filter);
+  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const page = Math.min(requestedPage, pageCount);
+
+  const docs = await ProductModel.find(filter)
+    .select("title category price discountedPrice stock rating reviewCount images bestseller festive source")
+    .sort({ createdAt: -1, _id: -1 })
+    .skip((page - 1) * PAGE_SIZE)
+    .limit(PAGE_SIZE)
+    .lean();
   const products = docs.map((d) => ({
     id: String(d._id),
     title: d.title,
@@ -28,13 +63,33 @@ export default async function AdminProductsPage({ searchParams }: Props) {
     stock: d.stock ?? 0,
     rating: d.rating ?? 0,
     reviewCount: d.reviewCount ?? 0,
-    thumb: d.images?.thumbnails?.[0] ?? d.images?.previews?.[0] ?? "",
+    thumb: thumb(d.images?.thumbnails?.[0] ?? d.images?.previews?.[0] ?? ""),
+    bestseller: Boolean(d.bestseller),
+    festive: Boolean(d.festive),
+    supplierBrand: readSupplierSource(d.source)?.brand ?? "",
   }));
+
+  const hrefFor = (p: number) => {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (category) params.set("category", category);
+    if (p > 1) params.set("page", String(p));
+    const qs = params.toString();
+    return qs ? `/admin/products?${qs}` : "/admin/products";
+  };
+  const filtered = Boolean(q || category);
+  const rangeStart = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(page * PAGE_SIZE, total);
 
   return (
     <div className="max-w-[1170px] mx-auto">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-7.5">
-        <h1 className="font-semibold text-heading-6 text-dark">Products</h1>
+        <div>
+          <h1 className="font-semibold text-heading-6 text-dark">Products</h1>
+          <p className="text-custom-sm text-dark-4 mt-1">
+            {total.toLocaleString("en-IN")} {filtered ? "matching" : "total"} {total === 1 ? "product" : "products"}
+          </p>
+        </div>
         <Link href="/admin/products/new" className={primaryButtonClass}>
           + New product
         </Link>
@@ -53,10 +108,21 @@ export default async function AdminProductsPage({ searchParams }: Props) {
             placeholder="Search by title..."
             className={`${adminInputClass} max-w-[360px]`}
           />
+          <label htmlFor="category" className="sr-only">
+            Filter by category
+          </label>
+          <select id="category" name="category" defaultValue={category} className={`${adminInputClass} max-w-[240px]`}>
+            <option value="">All categories</option>
+            {allCategories.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
           <button type="submit" className={secondaryButtonClass}>
             Search
           </button>
-          {q && (
+          {filtered && (
             <Link href="/admin/products" className="self-center text-custom-sm text-blue hover:underline">
               Clear
             </Link>
@@ -65,7 +131,7 @@ export default async function AdminProductsPage({ searchParams }: Props) {
 
         {products.length === 0 ? (
           <p className="px-6 py-10 text-center">
-            {q ? `No products match "${q}".` : "No products yet."}
+            {filtered ? "No products match these filters." : "No products yet."}
           </p>
         ) : (
           <div className="overflow-x-auto">
@@ -94,9 +160,22 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                             <img src={p.thumb} alt="" className="w-full h-full object-contain" loading="lazy" />
                           )}
                         </div>
-                        <Link href={`/admin/products/${p.id}/edit`} className="font-medium text-dark hover:text-blue">
-                          {p.title}
-                        </Link>
+                        <div className="min-w-0">
+                          <Link href={`/admin/products/${p.id}/edit`} className="font-medium text-dark hover:text-blue">
+                            {p.title}
+                          </Link>
+                          {(p.supplierBrand || p.bestseller || p.festive) && (
+                            <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                              {p.supplierBrand && (
+                                <span className="text-custom-xs text-dark-4" title="Supplier (internal only)">
+                                  {p.supplierBrand}
+                                </span>
+                              )}
+                              {p.bestseller && <span className={`${badgeClass} bg-yellow-light-2 text-yellow-dark-2`}>Best seller</span>}
+                              {p.festive && <span className={`${badgeClass} bg-red-light-6 text-red`}>Festive</span>}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="px-5 py-3">{p.category}</td>
@@ -122,6 +201,29 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {total > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-4 border-t border-gray-3 text-custom-sm">
+            <span>
+              Showing {rangeStart.toLocaleString("en-IN")}–{rangeEnd.toLocaleString("en-IN")} of{" "}
+              {total.toLocaleString("en-IN")} · Page {page} of {pageCount}
+            </span>
+            {pageCount > 1 && (
+              <div className="flex gap-2">
+                {page > 1 && (
+                  <Link href={hrefFor(page - 1)} className="rounded-lg border border-gray-3 px-3 py-1.5 hover:bg-gray-2">
+                    Previous
+                  </Link>
+                )}
+                {page < pageCount && (
+                  <Link href={hrefFor(page + 1)} className="rounded-lg border border-gray-3 px-3 py-1.5 hover:bg-gray-2">
+                    Next
+                  </Link>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>

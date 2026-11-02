@@ -32,3 +32,49 @@ export function countItems(items: ReadonlyArray<{ quantity?: number | null }> | 
   for (const item of items ?? []) n += item.quantity ?? 0;
   return n;
 }
+
+/**
+ * Smaller admin thumbnails: for Shopify CDN images, ask for a `width` instead of
+ * downloading the full-size original. Other URLs are returned unchanged.
+ */
+export function thumb(url: string | null | undefined, width = 160): string {
+  if (!url) return "";
+  if (!url.startsWith("https://cdn.shopify.com/")) return url;
+  try {
+    const u = new URL(url);
+    if (u.hostname !== "cdn.shopify.com") return url;
+    u.searchParams.set("width", String(width));
+    return u.toString();
+  } catch {
+    return url;
+  }
+}
+
+/** Supplier details stored on a product (admin only, never shown on the storefront). */
+export type SupplierSource = {
+  brand: string;
+  sku: string;
+  type: string;
+  /** Only set when it's a valid http(s) URL, so it's safe to use as a link href. */
+  url: string;
+};
+
+/**
+ * Reads `product.source` defensively (it comes straight from the DB) and returns
+ * null when there's no supplier brand.
+ */
+export function readSupplierSource(value: unknown): SupplierSource | null {
+  if (!value || typeof value !== "object") return null;
+  const v = value as Record<string, unknown>;
+  const str = (x: unknown) => (typeof x === "string" ? x.trim() : "");
+  const brand = str(v.brand);
+  if (!brand) return null;
+  let url = "";
+  try {
+    const u = new URL(str(v.url));
+    if (u.protocol === "https:" || u.protocol === "http:") url = u.toString();
+  } catch {
+    // missing or invalid URL: no link
+  }
+  return { brand, sku: str(v.sku), type: str(v.type), url };
+}

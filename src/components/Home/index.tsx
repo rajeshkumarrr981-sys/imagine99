@@ -10,16 +10,17 @@ import Newsletter from "../Common/Newsletter";
 import { Product } from "@/types/product";
 
 type Props = {
+  featured?: Product;
   newArrivals: Product[];
   bestSellers: Product[];
-  categories: { name: string; count: number }[];
+  categories: { name: string; count: number; image?: string }[];
   reviews: HomeReview[];
 };
 
-const Home = ({ newArrivals, bestSellers, categories, reviews }: Props) => {
+const Home = ({ featured, newArrivals, bestSellers, categories, reviews }: Props) => {
   return (
     <main>
-      <Hero featured={bestSellers[0] ?? newArrivals[0]} />
+      <Hero featured={featured} />
       <Categories categories={categories} />
       <NewArrival products={newArrivals} />
       <Countdown />

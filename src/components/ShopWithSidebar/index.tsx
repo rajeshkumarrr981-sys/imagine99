@@ -1,64 +1,89 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Breadcrumb from "../Common/Breadcrumb";
 import CustomSelect from "./CustomSelect";
 import CategoryDropdown from "./CategoryDropdown";
 import PriceDropdown from "./PriceDropdown";
+import Pagination from "./Pagination";
 import SingleGridItem from "../Shop/SingleGridItem";
 import SingleListItem from "../Shop/SingleListItem";
 import { Product } from "@/types/product";
 
 type Props = {
   products: Product[];
+  total: number;
+  page: number;
+  pages: number;
+  pageSize: number;
   categories: { name: string; count: number }[];
   activeCategory?: string;
   search?: string;
   sort: string;
-  initialMax?: number;
+  priceCeiling: number;
+  minPrice?: number;
+  maxPrice?: number;
 };
 
 const sortOptions = [
-  { label: "Latest Products", value: "latest" },
-  { label: "Best Selling", value: "popular" },
+  { label: "Newest first", value: "latest" },
+  { label: "Best selling", value: "popular" },
   { label: "Price: Low to High", value: "price-asc" },
   { label: "Price: High to Low", value: "price-desc" },
 ];
 
-const ShopWithSidebar = ({ products, categories, activeCategory, search, sort, initialMax }: Props) => {
+const ShopWithSidebar = ({
+  products,
+  total,
+  page,
+  pages,
+  pageSize,
+  categories,
+  activeCategory,
+  search,
+  sort,
+  priceCeiling,
+  minPrice,
+  maxPrice,
+}: Props) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [productStyle, setProductStyle] = useState("grid");
   const [productSidebar, setProductSidebar] = useState(false);
   const [stickyMenu, setStickyMenu] = useState(false);
 
-  const maxPrice = useMemo(
-    () => Math.max(100, Math.ceil(Math.max(0, ...products.map((p) => p.discountedPrice)))),
-    [products]
-  );
-  const startMax = initialMax ? Math.min(initialMax, maxPrice) : maxPrice;
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, startMax]);
-  useEffect(() => setPriceRange([0, startMax]), [startMax]);
-
-  const visible = products.filter(
-    (p) => p.discountedPrice >= priceRange[0] && p.discountedPrice <= priceRange[1]
-  );
-
-  // Category, search and sort live in the URL so the server does the filtering.
-  const updateQuery = (changes: Record<string, string | undefined>) => {
+  // Category, search, sort, price and page live in the URL; the server does the filtering.
+  const updateQuery = (changes: Record<string, string | undefined>, keepPage = false) => {
     const params = new URLSearchParams(searchParams.toString());
     for (const [key, value] of Object.entries(changes)) {
       if (value) params.set(key, value);
       else params.delete(key);
     }
+    if (!keepPage) params.delete("page");
     const qs = params.toString();
-    router.push(qs ? `/shop-with-sidebar?${qs}` : "/shop-with-sidebar");
+    router.push(qs ? `/shop-with-sidebar?${qs}` : "/shop-with-sidebar", { scroll: keepPage });
   };
 
-  const clearAll = () => {
-    setPriceRange([0, maxPrice]);
-    router.push("/shop-with-sidebar");
+  // The slider moves freely; the URL updates shortly after it stops.
+  const urlRange: [number, number] = [minPrice ?? 0, Math.min(maxPrice ?? priceCeiling, priceCeiling)];
+  const [priceRange, setPriceRange] = useState<[number, number]>(urlRange);
+  useEffect(() => setPriceRange(urlRange), [urlRange[0], urlRange[1]]); // eslint-disable-line react-hooks/exhaustive-deps
+  const priceTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const onPriceChange = (range: [number, number]) => {
+    setPriceRange(range);
+    clearTimeout(priceTimer.current);
+    priceTimer.current = setTimeout(() => {
+      updateQuery({
+        min: range[0] > 0 ? String(range[0]) : undefined,
+        max: range[1] < priceCeiling ? String(range[1]) : undefined,
+      });
+    }, 600);
   };
+
+  const clearAll = () => router.push("/shop-with-sidebar");
+
+  const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const to = Math.min(page * pageSize, total);
 
   useEffect(() => {
     const handleStickyMenu = () => setStickyMenu(window.scrollY >= 80);
@@ -148,7 +173,7 @@ const ShopWithSidebar = ({ products, categories, activeCategory, search, sort, i
                   />
 
                   {/* // <!-- price range box --> */}
-                  <PriceDropdown max={maxPrice} value={priceRange} onChange={setPriceRange} />
+                  <PriceDropdown max={priceCeiling} value={priceRange} onChange={onPriceChange} />
                 </div>
               </form>
             </div>
@@ -167,7 +192,7 @@ const ShopWithSidebar = ({ products, categories, activeCategory, search, sort, i
                     />
 
                     <p>
-                      Showing <span className="text-dark">{visible.length}</span> products
+                      Showing <span className="text-dark">{from}–{to}</span> of <span className="text-dark">{total.toLocaleString("en-IN")}</span>
                       {search && (
                         <> for &ldquo;<span className="text-dark">{search}</span>&rdquo;</>
                       )}
@@ -263,7 +288,7 @@ const ShopWithSidebar = ({ products, categories, activeCategory, search, sort, i
                     : "flex flex-col gap-7.5"
                 }`}
               >
-                {visible.map((item, key) =>
+                {products.map((item, key) =>
                   productStyle === "grid" ? (
                     <SingleGridItem item={item} key={key} />
                   ) : (
@@ -272,6 +297,19 @@ const ShopWithSidebar = ({ products, categories, activeCategory, search, sort, i
                 )}
               </div>
               {/* <!-- Products Grid Tab Content End --> */}
+
+              {products.length === 0 && (
+                <p className="py-16 text-center text-dark-4">No products match these filters.</p>
+              )}
+
+              <Pagination
+                page={page}
+                pages={pages}
+                onChange={(p) => {
+                  updateQuery({ page: p > 1 ? String(p) : undefined }, true);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+              />
             </div>
             {/* // <!-- Content End --> */}
           </div>

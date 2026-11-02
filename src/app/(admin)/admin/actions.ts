@@ -26,10 +26,23 @@ async function assertAdmin() {
 // Validation
 // ---------------------------------------------------------------------------
 
-// Storefront renders product images with next/image and next.config has no
-// images.remotePatterns, so only site-relative paths (e.g. /images/products/x.png)
-// are accepted. Widen this regex if remote hosts get configured.
+// Product images are either site-relative paths (e.g. /images/products/x.png) or
+// full https:// URLs on any host (e.g. the Shopify CDN). The storefront uses a
+// custom image loader, so remote hosts work without next.config remotePatterns.
+// Protocol-relative ("//host/x.png"), http:// and other schemes are rejected.
 const IMAGE_PATH = /^\/(?!\/)[^\s]*$/;
+const IMAGE_URL = /^https:\/\/[^\s/]+[^\s]*$/i;
+
+function isValidImage(value: string) {
+  if (IMAGE_PATH.test(value)) return true;
+  if (!IMAGE_URL.test(value)) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && url.hostname !== "";
+  } catch {
+    return false;
+  }
+}
 
 const emptyToUndefined = (v: unknown) => (typeof v === "string" && v.trim() === "" ? undefined : v);
 
@@ -52,7 +65,15 @@ const imageList = z
   )
   .pipe(
     z
-      .array(z.string().max(500).regex(IMAGE_PATH, "Image paths must start with / (e.g. /images/products/product-1-bg-1.png)"))
+      .array(
+        z
+          .string()
+          .max(1000, "Image URL is too long")
+          .refine(
+            isValidImage,
+            "Each image must be a site path starting with / (e.g. /images/products/product-1-bg-1.png) or a full https:// URL"
+          )
+      )
       .max(10, "At most 10 images")
   );
 
@@ -73,6 +94,8 @@ const productSchema = z
     ),
     previews: imageList.refine((list) => list.length > 0, "Add at least one image"),
     thumbnails: imageList,
+    bestseller: z.boolean(),
+    festive: z.boolean(),
   })
   .refine((d) => d.discountedPrice <= d.price, {
     path: ["discountedPrice"],
@@ -88,6 +111,8 @@ export type ProductFormValues = {
   stock: string;
   previews: string;
   thumbnails: string;
+  bestseller: boolean;
+  festive: boolean;
 };
 
 export type ProductFormState = {
@@ -110,6 +135,9 @@ function readProductForm(formData: FormData): ProductFormValues {
     stock: get("stock"),
     previews: get("previews"),
     thumbnails: get("thumbnails"),
+    // Unchecked checkboxes aren't submitted at all.
+    bestseller: formData.get("bestseller") != null,
+    festive: formData.get("festive") != null,
   };
 }
 
@@ -164,6 +192,10 @@ export async function saveProduct(
       previews: d.previews,
       thumbnails: d.thumbnails.length ? d.thumbnails : d.previews,
     },
+    bestseller: d.bestseller,
+    festive: d.festive,
+    // `source` (supplier details) and `publishedAt` never come from the form,
+    // so updates leave them untouched.
   };
 
   await connectDB();
@@ -173,7 +205,7 @@ export async function saveProduct(
     const updated = await ProductModel.findByIdAndUpdate(productId, { $set: doc }, { runValidators: true });
     if (!updated) return { error: "This product no longer exists.", values };
   } else {
-    const created = await ProductModel.create(doc);
+    const created = await ProductModel.create({ ...doc, publishedAt: new Date() });
     id = String(created._id);
   }
 
