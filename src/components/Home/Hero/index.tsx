@@ -50,7 +50,7 @@ const Hero = ({ featured }: { featured?: Product }) => {
                 Gifts that <em className="text-marigold italic">glow</em> long after the diyas are lit.
               </h1>
               <p className="mt-6 max-w-[460px] text-[17px] leading-[1.7] text-ivory/70">
-                Handcrafted décor, serveware and festive keepsakes for the festival of lights. Chosen with care, delivered to your door, and paid for when it arrives.
+                Handcrafted décor, serveware and festive keepsakes for the festival of lights. Everything at ₹149, ₹249 or ₹399, chosen with care and delivered free to your door.
               </p>
               <div className="mt-9 flex flex-wrap items-center gap-6">
                 <Link
