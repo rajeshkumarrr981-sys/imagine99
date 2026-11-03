@@ -7,15 +7,17 @@ import { adminInputClass, primaryButtonClass, secondaryButtonClass } from "./for
 
 const TIER_HINT = `Store tiers: ${PRICE_TIERS.map((t) => money(t)).join(", ")}`;
 
-type TextField = Exclude<keyof ProductFormValues, "bestseller" | "festive">;
+type TextField = Exclude<keyof ProductFormValues, "bestseller" | "festive" | "visibility">;
 
 type Props = {
   productId?: string;
   initial: ProductFormValues;
   categories: string[];
+  /** Whether the product is currently hidden from the shop (edit page only). */
+  hiddenNow?: boolean;
 };
 
-export default function ProductForm({ productId, initial, categories }: Props) {
+export default function ProductForm({ productId, initial, categories, hiddenNow }: Props) {
   const [state, formAction, pending] = useActionState<ProductFormState, FormData>(
     saveProduct.bind(null, productId),
     {}
@@ -151,6 +153,29 @@ export default function ProductForm({ productId, initial, categories }: Props) {
             </label>
           </div>
         </fieldset>
+
+        <div>
+          <label htmlFor="visibility" className="block mb-2 font-medium text-dark">
+            Show in shop
+          </label>
+          <select
+            id="visibility"
+            name="visibility"
+            defaultValue={values.visibility}
+            className="rounded-md border border-gray-3 bg-gray-1 py-2.5 px-4 text-dark outline-none focus:border-blue"
+          >
+            <option value="auto">Automatic (product ranking decides)</option>
+            <option value="show">Always show</option>
+            <option value="hide">Always hide</option>
+          </select>
+          <p className="mt-1.5 text-custom-sm text-dark-4">
+            {hiddenNow === undefined
+              ? "The ranking hides weaker products to keep the shop attractive."
+              : hiddenNow
+                ? "Currently hidden from the shop. Hidden products can still be ordered from existing carts."
+                : "Currently visible in the shop."}
+          </p>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-3 mt-7.5">

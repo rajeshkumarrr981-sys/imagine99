@@ -10,7 +10,7 @@ const Categories = ({ categories }: { categories: Category[] }) => {
     <section className="pt-20">
       <div className="max-w-[1170px] w-full mx-auto px-4 sm:px-8 xl:px-0">
         <SectionHeading eyebrow="Browse" title="Shop by category" action={{ label: "All products", href: "/shop-with-sidebar" }} />
-        <ul className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-x-6 gap-y-10">
+        <ul className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-10">
           {categories.map((c) => (
             <li key={c.name}>
               <Link href={`/shop-with-sidebar?category=${encodeURIComponent(c.name)}`} className="group flex flex-col items-center text-center">

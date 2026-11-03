@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { isValidObjectId } from "mongoose";
 import { connectDB } from "@/lib/db";
-import { getCategories } from "@/lib/products";
+import { getAllCategoryNames } from "@/lib/products";
 import { ProductModel } from "@/models/Product";
 import { Forbidden, requireAdmin } from "@/components/Admin/guard";
 import ProductForm from "@/components/Admin/ProductForm";
@@ -22,7 +22,7 @@ export default async function EditProductPage({ params }: Props) {
   if (!isValidObjectId(id)) notFound();
 
   await connectDB();
-  const [product, categoryRows] = await Promise.all([ProductModel.findById(id).lean(), getCategories()]);
+  const [product, categoryRows] = await Promise.all([ProductModel.findById(id).lean(), getAllCategoryNames()]);
   if (!product) notFound();
 
   const previews = product.images?.previews ?? [];
@@ -50,7 +50,7 @@ export default async function EditProductPage({ params }: Props) {
       <div className="rounded-xl bg-white shadow-1 p-5 sm:p-7.5">
         <ProductForm
           productId={id}
-          categories={categoryRows.map((c) => c.name).filter(Boolean)}
+          categories={categoryRows}
           initial={{
             title: product.title ?? "",
             description: product.description ?? "",
@@ -63,7 +63,9 @@ export default async function EditProductPage({ params }: Props) {
             thumbnails: sameImages ? "" : thumbnails.join("\n"),
             bestseller: Boolean(product.bestseller),
             festive: Boolean(product.festive),
+            visibility: (product.visibility as "auto" | "show" | "hide") ?? "auto",
           }}
+          hiddenNow={Boolean(product.hidden)}
         />
       </div>
 

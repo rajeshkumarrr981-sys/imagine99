@@ -19,6 +19,7 @@ import { PreviewSliderProvider } from "../context/PreviewSliderContext";
 import PreviewSliderModal from "@/components/Common/PreviewSlider";
 
 import ScrollToTop from "@/components/Common/ScrollToTop";
+import ScrollReset from "@/components/Common/ScrollReset";
 import PreLoader from "@/components/Common/PreLoader";
 
 export default function RootLayout({
@@ -58,6 +59,7 @@ export default function RootLayout({
               </CartModalProvider>
             </ReduxProvider>
             <ScrollToTop />
+            <ScrollReset />
             <Footer />
             </SessionProvider>
           </>

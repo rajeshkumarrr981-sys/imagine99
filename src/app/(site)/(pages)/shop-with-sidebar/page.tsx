@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-const SORTS: ProductSort[] = ["latest", "popular", "price-asc", "price-desc"];
+const SORTS: ProductSort[] = ["featured", "latest", "popular", "price-asc", "price-desc"];
 const PAGE_SIZE = 24;
 
 const toNumber = (v?: string) => {
@@ -25,7 +25,7 @@ export default async function ShopWithSidebarPage({
   searchParams: Promise<{ search?: string; category?: string; sort?: string; min?: string; max?: string; page?: string; tier?: string }>;
 }) {
   const params = await searchParams;
-  const sort = (SORTS as string[]).includes(params.sort ?? "") ? (params.sort as ProductSort) : "latest";
+  const sort = (SORTS as string[]).includes(params.sort ?? "") ? (params.sort as ProductSort) : "featured";
   const category = params.category || undefined;
   const search = params.search?.slice(0, 100) || undefined;
   const tier = (PRICE_TIERS as readonly number[]).includes(Number(params.tier)) ? Number(params.tier) : undefined;

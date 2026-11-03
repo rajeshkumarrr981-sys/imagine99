@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getCategories } from "@/lib/products";
+import { getAllCategoryNames } from "@/lib/products";
 import { Forbidden, requireAdmin } from "@/components/Admin/guard";
 import ProductForm from "@/components/Admin/ProductForm";
 
@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "New product" };
 export default async function NewProductPage() {
   if (!(await requireAdmin())) return <Forbidden />;
 
-  const categories = (await getCategories()).map((c) => c.name).filter(Boolean);
+  const categories = await getAllCategoryNames();
 
   return (
     <div className="max-w-[800px] mx-auto">
@@ -31,6 +31,7 @@ export default async function NewProductPage() {
             thumbnails: "",
             bestseller: false,
             festive: false,
+            visibility: "auto",
           }}
         />
       </div>

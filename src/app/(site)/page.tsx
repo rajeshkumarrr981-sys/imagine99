@@ -35,23 +35,29 @@ async function latestReviews() {
 }
 
 export default async function HomePage() {
-  const [newArrivals, bestSellers, festivePicks, categories, tierCounts, reviews] = await Promise.all([
-    getProducts({ festive: true, sort: "latest", limit: 8, inStockOnly: true }),
-    getProducts({ bestseller: true, sort: "popular", limit: 4, inStockOnly: true }),
-    getProducts({ festive: true, bestseller: true, sort: "latest", limit: 1, inStockOnly: true }),
+  const [festive, popular, categories, tierCounts, reviews] = await Promise.all([
+    getProducts({ festive: true, limit: 9, inStockOnly: true }),
+    getProducts({ bestseller: true, sort: "popular", limit: 16, inStockOnly: true }),
     getCategories(),
     getTierCounts(),
     latestReviews(),
   ]);
+  // Each section skips products already shown above it, so nothing appears twice.
+  const featured = festive[0] ?? popular[0];
+  const newArrivals = festive.filter((p) => p.id !== featured?.id).slice(0, 8);
+  const shown = new Set([featured?.id, ...newArrivals.map((p) => p.id)]);
+  const bestSellers = popular.filter((p) => !shown.has(p.id)).slice(0, 4);
   return (
     <Home
-      featured={festivePicks[0] ?? bestSellers[0] ?? newArrivals[0]}
+      featured={featured}
       newArrivals={newArrivals}
       bestSellers={bestSellers.length ? bestSellers : newArrivals.slice(0, 4)}
-      categories={[...categories]
-        // Festive categories lead during Diwali, then the largest; 12 fit two neat rows.
+      categories={categories
+        // Skip near-empty categories; festive ones lead during Diwali, then the largest.
+        // 8 fill neat rows of 2 or 4.
+        .filter((c) => c.count >= 8)
         .sort((x, y) => Number(FESTIVE.includes(y.name)) - Number(FESTIVE.includes(x.name)) || y.count - x.count)
-        .slice(0, 12)}
+        .slice(0, 8)}
       tierCounts={tierCounts}
       reviews={reviews}
     />

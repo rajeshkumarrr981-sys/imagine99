@@ -49,7 +49,7 @@ export default async function AdminProductsPage({ searchParams }: Props) {
   const page = Math.min(requestedPage, pageCount);
 
   const docs = await ProductModel.find(filter)
-    .select("title category price discountedPrice stock rating reviewCount images bestseller festive source")
+    .select("title category price discountedPrice stock rating reviewCount images bestseller festive hidden source")
     .sort({ createdAt: -1, _id: -1 })
     .skip((page - 1) * PAGE_SIZE)
     .limit(PAGE_SIZE)
@@ -66,6 +66,7 @@ export default async function AdminProductsPage({ searchParams }: Props) {
     thumb: thumb(d.images?.thumbnails?.[0] ?? d.images?.previews?.[0] ?? ""),
     bestseller: Boolean(d.bestseller),
     festive: Boolean(d.festive),
+    hidden: Boolean(d.hidden),
     supplierBrand: readSupplierSource(d.source)?.brand ?? "",
   }));
 
@@ -164,7 +165,7 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                           <Link href={`/admin/products/${p.id}/edit`} className="font-medium text-dark hover:text-blue">
                             {p.title}
                           </Link>
-                          {(p.supplierBrand || p.bestseller || p.festive) && (
+                          {(p.supplierBrand || p.bestseller || p.festive || p.hidden) && (
                             <div className="flex flex-wrap items-center gap-1.5 mt-1">
                               {p.supplierBrand && (
                                 <span className="text-custom-xs text-dark-4" title="Supplier (internal only)">
@@ -173,6 +174,7 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                               )}
                               {p.bestseller && <span className={`${badgeClass} bg-yellow-light-2 text-yellow-dark-2`}>Best seller</span>}
                               {p.festive && <span className={`${badgeClass} bg-red-light-6 text-red`}>Festive</span>}
+                              {p.hidden && <span className={`${badgeClass} bg-gray-2 text-dark-4`}>Hidden from shop</span>}
                             </div>
                           )}
                         </div>

@@ -25,6 +25,7 @@ type Props = {
 };
 
 const sortOptions = [
+  { label: "Recommended", value: "featured" },
   { label: "Newest first", value: "latest" },
   { label: "Best selling", value: "popular" },
   { label: "Price: Low to High", value: "price-asc" },
@@ -187,7 +188,7 @@ const ShopWithSidebar = ({
                     <CustomSelect
                       options={sortOptions}
                       value={sort}
-                      onChange={(value) => updateQuery({ sort: value === "latest" ? undefined : value })}
+                      onChange={(value) => updateQuery({ sort: value === "featured" ? undefined : value })}
                     />
 
                     <p>

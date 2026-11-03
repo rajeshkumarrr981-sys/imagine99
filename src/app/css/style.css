@@ -42,6 +42,16 @@
 }
 
 @layer utilities {
+  /* Full height of what is actually visible (phones shrink it for the browser toolbar). */
+  .h-visible-screen {
+    height: 100vh;
+    height: 100dvh;
+  }
+  /* Bottom padding that also clears the iPhone home indicator. */
+  .pb-safe-4 {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
   /* Small caps label used above section titles. */
   .eyebrow {
     @apply font-medium uppercase text-custom-xs tracking-[0.22em] text-brass-dark;

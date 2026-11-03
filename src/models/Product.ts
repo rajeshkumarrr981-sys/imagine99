@@ -21,6 +21,11 @@ const ProductSchema = new Schema(
     festive: { type: Boolean, default: false, index: true },
     // When the product first went on sale; used for "new arrivals".
     publishedAt: { type: Date, default: Date.now, index: true },
+    // Set by `npm run score`: higher shows first; hidden products stay out of the shop.
+    score: { type: Number, default: 0, index: true },
+    hidden: { type: Boolean, default: false, index: true },
+    // Admin override for the ranking: "show" / "hide" always win over the score.
+    visibility: { type: String, enum: ["auto", "show", "hide"], default: "auto" },
 
     // Supplier details for fulfilment. Admin only: never sent to the storefront.
     source: {

@@ -26,7 +26,8 @@ export function toProduct(doc: any): Product {
   };
 }
 
-export type ProductSort = "latest" | "price-asc" | "price-desc" | "popular";
+// "featured" = our ranking (see scripts/score-catalog.ts), the default everywhere.
+export type ProductSort = "featured" | "latest" | "price-asc" | "price-desc" | "popular";
 
 export type ProductQuery = {
   search?: string;
@@ -41,8 +42,11 @@ export type ProductQuery = {
   page?: number; // 1-based
 };
 
+// Products hidden by the ranking script (or the admin) never appear in lists.
+const VISIBLE = { hidden: { $ne: true } };
+
 function buildFilter(q: ProductQuery) {
-  const filter: Record<string, unknown> = {};
+  const filter: Record<string, unknown> = { ...VISIBLE };
   if (q.category) filter.category = q.category;
   if (q.bestseller) filter.bestseller = true;
   if (q.festive) filter.festive = true;
@@ -60,16 +64,18 @@ function buildFilter(q: ProductQuery) {
   return filter;
 }
 
-function buildSort(sort: ProductSort = "latest"): Record<string, 1 | -1> {
+function buildSort(sort: ProductSort = "featured"): Record<string, 1 | -1> {
   switch (sort) {
     case "price-asc":
-      return { discountedPrice: 1, _id: 1 };
+      return { discountedPrice: 1, score: -1, _id: 1 };
     case "price-desc":
-      return { discountedPrice: -1, _id: 1 };
+      return { discountedPrice: -1, score: -1, _id: 1 };
     case "popular":
-      return { reviewCount: -1, bestseller: -1, publishedAt: -1, _id: 1 };
-    default:
+      return { reviewCount: -1, bestseller: -1, score: -1, _id: 1 };
+    case "latest":
       return { publishedAt: -1, _id: 1 };
+    default:
+      return { score: -1, _id: 1 };
   }
 }
 
@@ -103,7 +109,7 @@ export async function searchProducts(query: ProductQuery & { pageSize?: number }
 /** Highest selling price, optionally within a category (for the price slider). */
 export async function getPriceCeiling(category?: string): Promise<number> {
   await connectDB();
-  const top = await ProductModel.findOne(category ? { category } : {})
+  const top = await ProductModel.findOne(category ? { ...VISIBLE, category } : VISIBLE)
     .select("discountedPrice")
     .sort({ discountedPrice: -1 })
     .lean();
@@ -117,11 +123,12 @@ export async function getProduct(id: string): Promise<Product | null> {
   return doc ? toProduct(doc) : null;
 }
 
-/** Categories with product counts and a representative image (a best seller where possible). */
+/** Categories with visible product counts and the image of their top-ranked product. */
 export async function getCategories(): Promise<{ name: string; count: number; image?: string }[]> {
   await connectDB();
   const rows = await ProductModel.aggregate<{ _id: string; count: number; image?: string }>([
-    { $sort: { bestseller: -1, reviewCount: -1, publishedAt: -1 } },
+    { $match: VISIBLE },
+    { $sort: { score: -1 } },
     {
       $group: {
         _id: "$category",
@@ -134,11 +141,18 @@ export async function getCategories(): Promise<{ name: string; count: number; im
   return rows.map((r) => ({ name: r._id, count: r.count, image: r.image ?? undefined }));
 }
 
-/** Number of in-stock products at each price. */
+/** Every category name, including ones whose products are all hidden (for the admin). */
+export async function getAllCategoryNames(): Promise<string[]> {
+  await connectDB();
+  const names = (await ProductModel.distinct("category")) as string[];
+  return names.filter(Boolean).sort((a, b) => a.localeCompare(b));
+}
+
+/** Number of visible, in-stock products at each price. */
 export async function getTierCounts(): Promise<Record<number, number>> {
   await connectDB();
   const rows = await ProductModel.aggregate<{ _id: number; n: number }>([
-    { $match: { stock: { $gt: 0 } } },
+    { $match: { ...VISIBLE, stock: { $gt: 0 } } },
     { $group: { _id: "$discountedPrice", n: { $sum: 1 } } },
   ]);
   return Object.fromEntries(rows.map((r) => [r._id, r.n]));

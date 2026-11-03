@@ -96,6 +96,7 @@ const productSchema = z
     thumbnails: imageList,
     bestseller: z.boolean(),
     festive: z.boolean(),
+    visibility: z.enum(["auto", "show", "hide"]),
   })
   .refine((d) => d.discountedPrice <= d.price, {
     path: ["discountedPrice"],
@@ -113,6 +114,7 @@ export type ProductFormValues = {
   thumbnails: string;
   bestseller: boolean;
   festive: boolean;
+  visibility: "auto" | "show" | "hide";
 };
 
 export type ProductFormState = {
@@ -138,6 +140,7 @@ function readProductForm(formData: FormData): ProductFormValues {
     // Unchecked checkboxes aren't submitted at all.
     bestseller: formData.get("bestseller") != null,
     festive: formData.get("festive") != null,
+    visibility: (["auto", "show", "hide"].includes(get("visibility")) ? get("visibility") : "auto") as ProductFormValues["visibility"],
   };
 }
 
@@ -194,6 +197,9 @@ export async function saveProduct(
     },
     bestseller: d.bestseller,
     festive: d.festive,
+    visibility: d.visibility,
+    // "auto" keeps the ranking's decision until `npm run score` runs again.
+    ...(d.visibility === "auto" ? {} : { hidden: d.visibility === "hide" }),
     // `source` (supplier details) and `publishedAt` never come from the form,
     // so updates leave them untouched.
   };
@@ -205,7 +211,8 @@ export async function saveProduct(
     const updated = await ProductModel.findByIdAndUpdate(productId, { $set: doc }, { runValidators: true });
     if (!updated) return { error: "This product no longer exists.", values };
   } else {
-    const created = await ProductModel.create({ ...doc, publishedAt: new Date() });
+    // New products start near the top of the ranking so they get seen.
+    const created = await ProductModel.create({ ...doc, publishedAt: new Date(), score: 90 });
     id = String(created._id);
   }
 
