@@ -10,6 +10,7 @@
 import { readFileSync } from "node:fs";
 import mongoose from "mongoose";
 import { ProductModel } from "../src/models/Product";
+import { scoreCatalog } from "./lib/scoring";
 import { tierFor } from "../src/lib/pricing";
 
 type Variant = { price: string; compare_at_price: string | null; available: boolean };
@@ -252,6 +253,8 @@ async function main() {
     console.log(`Batch ${i / 500 + 1}: ${res.upsertedCount} new, ${res.modifiedCount} updated`);
   }
   console.log(`Done. ${written} products written. Total in database: ${await ProductModel.countDocuments()}`);
+  // Rank the catalogue straight away so new products are sorted (and weak ones hidden).
+  await scoreCatalog();
   await mongoose.disconnect();
 }
 

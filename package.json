@@ -4,12 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "tsx scripts/score-catalog.ts --build && next build",
     "start": "next start",
     "lint": "next lint",
     "seed": "tsx --env-file=.env.local scripts/seed.ts",
     "import": "tsx --env-file=.env.local scripts/import-catalog.ts",
-    "score": "tsx --env-file=.env.local scripts/score-catalog.ts"
+    "score": "tsx scripts/score-catalog.ts"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.6.1",

@@ -85,8 +85,9 @@ const RecentlyViewdItems = ({ products }: { products: Product[] }) => {
 
           <Swiper
             ref={sliderRef}
-            slidesPerView={4}
-            spaceBetween={20}
+            slidesPerView={2}
+            spaceBetween={12}
+            breakpoints={{ 768: { slidesPerView: 3, spaceBetween: 20 }, 1024: { slidesPerView: 4, spaceBetween: 20 } }}
             className="justify-between"
           >
             {products.map((item, key) => (
