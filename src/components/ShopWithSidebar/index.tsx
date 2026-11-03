@@ -100,14 +100,15 @@ const ShopWithSidebar = ({
             <div
               className={`sidebar-content fixed xl:z-1 z-9999 left-0 top-0 xl:translate-x-0 xl:static max-w-[310px] xl:max-w-[270px] w-full ease-out duration-200 ${
                 productSidebar
-                  ? "translate-x-0 bg-white p-5 h-screen overflow-y-auto"
+                  ? "translate-x-0 bg-white p-5 h-visible-screen overflow-y-auto"
                   : "-translate-x-full"
               }`}
             >
               <button
                 onClick={() => setProductSidebar(!productSidebar)}
                 aria-label="button for product sidebar toggle"
-                className={`xl:hidden absolute -right-12.5 sm:-right-8 flex items-center justify-center w-8 h-8 rounded-md bg-white shadow-1 ${
+                // Close handle while the panel is open; the "Filters" button in the top bar opens it.
+                className={`${productSidebar ? "flex" : "hidden"} xl:hidden absolute -right-12.5 sm:-right-8 items-center justify-center w-8 h-8 rounded-md bg-white shadow-1 ${
                   stickyMenu
                     ? "lg:top-20 sm:top-34.5 top-35"
                     : "lg:top-24 sm:top-39 top-37"
@@ -183,6 +184,16 @@ const ShopWithSidebar = ({
                 <div className="flex items-center justify-between">
                   {/* <!-- top bar left --> */}
                   <div className="flex flex-wrap items-center gap-4">
+                    <button
+                      type="button"
+                      onClick={() => setProductSidebar(true)}
+                      className="xl:hidden inline-flex items-center gap-2 rounded-md border border-gray-3 bg-gray-1 px-3.5 py-2 text-custom-sm font-medium text-dark ease-out duration-200 hover:border-blue hover:text-blue"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+                        <path d="M4 6h16M7 12h10M10 18h4" />
+                      </svg>
+                      Filters
+                    </button>
                     <CustomSelect
                       options={sortOptions}
                       value={sort}
